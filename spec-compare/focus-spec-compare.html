@@ -307,7 +307,11 @@ const FALLBACK_VERSIONS = [
 ];
 
 const EMBED = document.documentElement.classList.contains("embed");
-if(EMBED){ const b = document.createElement("base"); b.target = "_blank"; document.head.appendChild(b); }
+if(EMBED){
+  const b = document.createElement("base"); b.target = "_blank"; document.head.appendChild(b);
+  // Escape inside the frame never reaches the schema map, so ask it to close the panel.
+  document.addEventListener("keydown", e => { if(e.key === "Escape") parent.postMessage({focusCompare: "close"}, "*"); });
+}
 
 const state = {
   versions: [],          // [{id, slug, label, num}]
@@ -671,13 +675,18 @@ function renderPicker(){
     // Partial keys (e.g. "cost-and-usage/billed-cost" from the schema maps) match
     // the full key that ends with them, then fall back to the last segment.
     const opts = [...sel.options].map(o => o.value).filter(Boolean);
-    // Older versions slug headings without dashes ("billedcost"), so compare loosely.
-    const last = state.sec.split("/").pop().replace(/-/g, "");
-    const hit = opts.find(k => k.endsWith("/" + state.sec)) ||
-                opts.find(k => k.split("/").pop().replace(/-/g, "") === last) ||
-                // Before v1.3 a column is an H3 split into H4 subsections; open its Description.
-                (c => c.find(k => k.endsWith("/description")) || c[0])(
-                  opts.filter(k => k.split("/").slice(0, -1).some(seg => seg.replace(/-/g, "") === last)));
+    // Compare loosely: older versions slug without dashes ("billedcost"), title some
+    // columns by display name ("Invoice Issuer" for InvoiceIssuerName), and suffix
+    // deprecated columns ("provider---deprecated").
+    const loose = seg => seg.replace(/-+deprecated$/, "").replace(/-/g, "");
+    const full = state.sec.split("/").pop().replace(/-/g, "");
+    const find = last =>
+      opts.find(k => loose(k.split("/").pop()) === last) ||
+      // Before v1.3 a column is an H3 split into H4 subsections; open its Description.
+      (c => c.find(k => k.endsWith("/description")) || c[0])(
+        opts.filter(k => k.split("/").slice(0, -1).some(seg => loose(seg) === last)));
+    const hit = opts.find(k => k.endsWith("/" + state.sec)) || find(full) ||
+                (/.name$/.test(full) ? find(full.replace(/name$/, "")) : undefined);
     if(hit) state.sec = hit;
   }
   if(state.sec && sel.querySelector('option[value="' + cssEsc(state.sec) + '"]')) sel.value = state.sec;

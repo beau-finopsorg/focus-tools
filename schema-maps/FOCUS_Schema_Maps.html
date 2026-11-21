@@ -180,6 +180,7 @@ body.hl-rel .relnote{display:block}
   .page{display:block;overflow:visible}
   .sheet{box-shadow:none;border-radius:0}
   .toolbar,.legend,.changes,#dpanel,.cmpbtn{display:none!important}
+  .col.sel{outline:none}
   .relnote{display:none!important}
   .relsvg{display:none!important}
   .kbadge{display:none!important}
@@ -533,9 +534,17 @@ body.hl-rel .relnote{display:block}
    +'<div class="dplinks"></div><iframe title="Spec compare" hidden></iframe><div class="dpmsg" hidden></div>';
  document.body.appendChild(dp);
  var frame=dp.querySelector('iframe'),selCol=null;
- function closePanel(){dp.hidden=true;document.body.classList.remove('dp-open');if(selCol)selCol.classList.remove('sel');selCol=null;}
+ function closePanel(){
+   if(dp.hidden)return;
+   dp.hidden=true;document.body.classList.remove('dp-open');
+   // Hand keyboard focus back to the glyph that opened the panel.
+   // Focus first: the glyph is only visible while its column is .sel or focused.
+   if(selCol){var g=selCol.querySelector('.cmpbtn');window.focus();if(g)g.focus({preventScroll:true});selCol.classList.remove('sel');}
+   selCol=null;
+ }
  dp.querySelector('.dpx').addEventListener('click',closePanel);
- document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dp.hidden)closePanel();});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePanel();});
+ window.addEventListener('message',function(e){if(e.source===frame.contentWindow&&e.data&&e.data.focusCompare==='close')closePanel();});
  function openPanel(a){
    var v=a.closest('.page').id.replace(/^v/,''),prev=PREV[v],ds=a.closest('.dscont').getAttribute('data-ds');
    var name=a.getAttribute('data-name'),ok=ONSITE.indexOf(v)>=0&&ONSITE.indexOf(prev)>=0;
@@ -562,6 +571,7 @@ body.hl-rel .relnote{display:block}
        +'<p>'+esc(a.getAttribute('data-desc')||'')+'</p>';
    }
    dp.hidden=false;document.body.classList.add('dp-open');
+   dp.querySelector('.dpx').focus({preventScroll:true});
    if(document.body.classList.contains('hl-rel'))requestAnimationFrame(draw);
  }
  // A column click follows its link to the specification; the ⇄ glyph opens the panel.
