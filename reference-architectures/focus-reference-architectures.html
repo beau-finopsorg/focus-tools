@@ -10,7 +10,7 @@
 <style>
 
 .unofficial-banner{
-  margin: 1rem 0 1.5rem;
+  margin: 1rem 16px;
   padding: .9rem 1.1rem;
   background: #fff8e8;
   border: 1px solid #e6d19a;
@@ -20,7 +20,6 @@
   line-height: 1.45;
 }
 .unofficial-banner p{margin:0;}
-.site-header,.burger,nav.drawer,.has-drawer .drawer{display:none !important;}
 
   :root{
     --purple:#bd3bfd; --purple-tint:#f3e8ff;
@@ -31,7 +30,6 @@
     --bg:#fff; --tint:rgba(0,0,0,.02); --panel:#f9fafa;
     --card-shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
     --radius:8px;
-    --header-h:74px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -208,10 +206,6 @@
   footer.site a{color:#fff}
   footer.site .fnote{max-width:820px}
 
-  header.site .burger{display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:#fff;cursor:pointer;width:36px;height:36px;border-radius:8px;flex-shrink:0;padding:0}
-  header.site .burger:hover{background:rgba(255,255,255,.12)}
-  header.site .burger svg{width:20px;height:20px}
-
   @media (max-width:1023px){aside.panel{width:290px}main.stage{padding:20px 20px 60px}}
   @media (max-width:767px){
     html{font-size:12px}
@@ -222,7 +216,6 @@
     .drawer{width:100%}
   }
 </style>
-<link rel="stylesheet" href="../assets/site.css">
 <link rel="stylesheet" href="../assets/value-chain.css">
 </head>
 <body>
@@ -232,9 +225,6 @@
 
 
 <header class="site">
-  <button class="burger" aria-label="Open site navigation">
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
-  </button>
   <div class="brand">
     <div class="titles">
       <h1>Reference Architectures</h1>
@@ -815,18 +805,6 @@ function renderAll(){renderPatternList();renderFacets();renderVerdict();renderPi
 renderAll();
 </script>
 <script src="../assets/value-chain.js"></script>
-<script>
-(function(){
-  var burger=document.querySelector('header.site .burger');
-  var nav=document.getElementById('leftnav');
-  var scrim=document.querySelector('.site-scrim');
-  if(!burger||!nav)return;
-  function closeNav(){nav.classList.remove('open');if(scrim)scrim.classList.remove('show');}
-  burger.addEventListener('click',function(){nav.classList.toggle('open');if(scrim)scrim.classList.toggle('show');});
-  if(scrim)scrim.addEventListener('click',closeNav);
-  nav.addEventListener('click',function(e){if(e.target.tagName==='A')closeNav();});
-})();
-</script>
 <aside class="unofficial-footer">
   <p>Written by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is an unofficial community project. It is not a FOCUS or FinOps Foundation deliverable.</p>
   <p>Licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Product names and marks belong to their owners.</p>
