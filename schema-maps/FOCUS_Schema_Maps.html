@@ -152,9 +152,15 @@ body.hl-rel .relsvg{display:block}
 .relnote{display:none;background:#f6ecff;border:1px solid #e3d4ff;border-radius:9px;padding:9px 15px;font-size:12px;color:#5a2b86;line-height:1.5}
 body.hl-rel .relnote{display:block}
 .relnote b{color:#7a1fb0}
-.col{cursor:pointer}
+.col{cursor:pointer;position:relative}
+/* compare glyph: shown on hover/focus (always on touch screens); opens the diff panel */
+.cmpbtn{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:none;align-items:center;justify-content:center;
+  width:22px;height:18px;border-radius:5px;background:#fff;border:1px solid #bd3bfd;color:#bd3bfd;font-size:12px;font-weight:700;line-height:1;cursor:pointer}
+.cmpbtn:hover,.cmpbtn:focus-visible{background:#bd3bfd;color:#fff;outline:none}
+.col:hover .cmpbtn,.col:focus-within .cmpbtn,.col.sel .cmpbtn{display:inline-flex}
+@media (hover:none){.cmpbtn{display:inline-flex}}
 /* hover popup (column definition flyout) */
-#coltip{position:fixed;z-index:90;width:340px;max-width:92vw;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:none;overflow:hidden}
+#coltip{position:fixed;z-index:90;pointer-events:none;width:340px;max-width:92vw;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:none;overflow:hidden}
 #coltip .tth{padding:9px 13px;color:#fff}
 #coltip .ttname{font-weight:700;font-size:14.5px;line-height:1.2}
 #coltip .ttid{font-family:"IBM Plex Mono",monospace;font-size:11px;opacity:.92;font-weight:500;display:block;margin-top:2px}
@@ -173,7 +179,7 @@ body.hl-rel .relnote{display:block}
   body{padding:0;gap:0;display:block}
   .page{display:block;overflow:visible}
   .sheet{box-shadow:none;border-radius:0}
-  .toolbar,.legend,.changes,#dpanel{display:none!important}
+  .toolbar,.legend,.changes,#dpanel,.cmpbtn{display:none!important}
   .relnote{display:none!important}
   .relsvg{display:none!important}
   .kbadge{display:none!important}
@@ -211,7 +217,7 @@ body.hl-rel .relnote{display:block}
   <a class="cmplink" href="../spec-compare/focus-spec-compare.html">Spec compare</a>
   <a class="dlall" href="FOCUS_Schema_Maps.pdf" download>&#x2193; Download all (PDF)</a>
 </div>
-<p class="legend">New = added since the previous version &middot; Changed = definition, format, or feature level materially changed &middot; Deprecated = marked for removal &middot; Mandatory = FOCUS requires this column unconditionally (excludes columns required only when a provider supports a given capability) &middot; Joins follow the FOCUS dataset relationships (no enforced keys). A column with several flags shows one stripe per flag. Open &ldquo;What changed&rdquo; under each version for the full list.</p>
+<p class="legend">New = added since the previous version &middot; Changed = definition, format, or feature level materially changed &middot; Deprecated = marked for removal &middot; Mandatory = FOCUS requires this column unconditionally (excludes columns required only when a provider supports a given capability) &middot; Joins follow the FOCUS dataset relationships (no enforced keys). A column with several flags shows one stripe per flag. Open &ldquo;What changed&rdquo; under each version for the full list. Click a column to open its definition, or hover and click &#8644; to compare it with the previous version.</p>
 
 <div class="relnote"><b>About these joins.</b> FOCUS does not define primary or foreign keys. The <b>JOIN&nbsp;KEY</b> (owner side) and <b>JOIN</b> (referencing side) badges mark the columns FOCUS uses to join datasets &mdash; defined from v1.3 in each dataset&rsquo;s join table &mdash; not enforced database keys. Note: Cost and Usage &harr; Contract Commitment joins on Contract Commitment ID, which lives inside the JSON object array in the <b>Contract Applied</b> column (not a scalar column). The v1.4 Invoice Detail and Billing Period joins are multi-column (Invoice Issuer Name + Invoice ID [+ Invoice Detail ID]; Billing Period Start + Invoice Issuer Name). The v1.5 SKU Price dataset (preview) joins Cost and Usage on SKU Price ID within the same Service Provider Name; resolving one price also matches Contract ID (from Contract Applied), Pricing Currency, a single Unit Price Type, and the charge period against SKU Price Effective Start/End. SKU Price can also join Contract Commitment on Contract ID.</div>
 <div class="page" id="v1.0">
@@ -558,11 +564,20 @@ body.hl-rel .relnote{display:block}
    dp.hidden=false;document.body.classList.add('dp-open');
    if(document.body.classList.contains('hl-rel'))requestAnimationFrame(draw);
  }
- document.addEventListener('click',function(e){
-   var a=e.target.closest&&e.target.closest('.col');
-   if(!a||e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;
-   e.preventDefault();tip.style.display='none';openPanel(a);
+ // A column click follows its link to the specification; the ⇄ glyph opens the panel.
+ // The glyph is a span (not a button) because columns are links.
+ document.querySelectorAll('.col').forEach(function(a){
+   var g=document.createElement('span');g.className='cmpbtn';g.textContent='⇄';
+   g.setAttribute('role','button');g.tabIndex=0;g.title='Compare with the previous version';
+   g.setAttribute('aria-label','Compare '+a.getAttribute('data-name')+' with the previous version');
+   a.appendChild(g);
  });
+ function fromGlyph(e){
+   var g=e.target.closest&&e.target.closest('.cmpbtn');if(!g)return;
+   e.preventDefault();e.stopPropagation();tip.style.display='none';openPanel(g.closest('.col'));
+ }
+ document.addEventListener('click',fromGlyph);
+ document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')fromGlyph(e);});
 
  // ---- hover popup (column definition flyout) ----
  var DSC={'Cost and Usage':'#bd3bfd','Contract Commitment':'#e8920c','Invoice Detail':'#e03131','Billing Period':'#3b5bdb','SKU Price':'#0c8599'};
@@ -585,7 +600,7 @@ body.hl-rel .relnote{display:block}
      +'<div class="ttdesc">'+esc(a.getAttribute('data-desc')||'')+'</div>'
      +(shared?'<div class="ttmeta">Shared across datasets — shown in each, counted once.</div>':'')
      +'<div class="ttmeta">'+esc(a.getAttribute('data-ver')||'')+'</div>'
-     +'<div class="ttlink">Click to see what changed in this column · ⌘/Ctrl-click opens the specification ↗</div>'
+     +'<div class="ttlink">Click to open the definition in the specification ↗ · ⇄ shows what changed</div>'
      +'</div>';
  }
  function place(e){
@@ -597,7 +612,7 @@ body.hl-rel .relnote{display:block}
    if(y<pad)y=pad;
    tip.style.left=x+'px';tip.style.top=y+'px';
  }
- document.addEventListener('mouseover',function(e){var a=e.target.closest&&e.target.closest('.col');if(!a)return;fill(a);tip.style.display='block';place(e);});
+ document.addEventListener('mouseover',function(e){var a=e.target.closest&&e.target.closest('.col');if(!a)return;if(e.target.closest('.cmpbtn')){tip.style.display='none';return;}fill(a);tip.style.display='block';place(e);});
  document.addEventListener('mousemove',function(e){if(tip.style.display==='block'&&e.target.closest&&e.target.closest('.col'))place(e);});
  document.addEventListener('mouseout',function(e){var a=e.target.closest&&e.target.closest('.col');if(a&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('.col')))tip.style.display='none';});
 })();
