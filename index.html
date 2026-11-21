@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCUS tools | Unofficial community project</title>
+<meta name="description" content="Unofficial community tools for the FinOps Open Cost and Usage Specification: interactive schema maps for versions 1.0 through 1.5, printable PDFs, and reference architectures.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+  :root {
+    --focus-dark: #2B3F50;
+    --focus-purple: #bd3bfd;
+    --ink: #1f2a33;
+    --muted: #5b6b78;
+    --rule: #d9dee3;
+    --soft: #f5f7f9;
+    --banner-bg: #fff8e8;
+    --banner-border: #e6d19a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink);
+    background: #fff;
+  }
+  a { color: var(--focus-purple); text-underline-offset: 2px; }
+  a:hover, a:focus { color: var(--focus-dark); }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 1.25rem; }
+  .unofficial-banner {
+    background: var(--banner-bg);
+    border: 1px solid var(--banner-border);
+    border-radius: 6px;
+    padding: .75rem 1rem;
+    margin: 1.25rem 0 1.75rem;
+    font-size: .92rem;
+  }
+  .unofficial-banner p { margin: 0; }
+  h1 { color: var(--focus-dark); font-size: 2.25rem; line-height: 1.15; margin: 0 0 .75rem; }
+  h2 {
+    color: var(--focus-dark);
+    font-size: 1.4rem;
+    margin: 2.5rem 0 .75rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .lede { font-size: 1.1rem; color: var(--ink); margin: 0 0 1rem; }
+  .primary {
+    display: block;
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--focus-purple);
+    border-radius: 6px;
+    padding: .9rem 1rem;
+    margin: 1rem 0;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .primary:hover, .primary:focus { background: var(--soft); color: var(--ink); }
+  .primary strong { display: block; color: var(--focus-dark); font-size: 1.08rem; }
+  .primary span { color: var(--muted); font-size: .93rem; }
+  ul.pdfs { padding-left: 1.25rem; margin: .5rem 0 1rem; }
+  ul.pdfs li { margin: .2rem 0; }
+  .badge {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: var(--focus-dark);
+    background: var(--banner-bg);
+    border: 1px solid var(--banner-border);
+    border-radius: 3px;
+    padding: 0 .35rem;
+    vertical-align: middle;
+  }
+  .note {
+    background: var(--banner-bg);
+    border: 1px solid var(--banner-border);
+    border-radius: 6px;
+    padding: .7rem 1rem;
+    margin: 1rem 0;
+    font-size: .93rem;
+  }
+  .note p { margin: 0; }
+  footer {
+    border-top: 1px solid var(--rule);
+    margin: 3rem 0 2rem;
+    padding-top: 1rem;
+    font-size: .88rem;
+    color: var(--muted);
+  }
+  footer p { margin: .35rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside class="unofficial-banner" role="note" aria-label="Unofficial project notice">
+  <p><strong>Unofficial community project.</strong> These tools are a personal and community project by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. They are not an official FOCUS, FinOps Foundation, or Linux Foundation publication. If a tool and the specification disagree, the specification is right.</p>
+</aside>
+
+<main>
+  <h1>FOCUS tools</h1>
+  <p class="lede">Free reference tools for working with the FinOps Open Cost and Usage Specification (FOCUS): schema maps for each version and a set of reference architectures.</p>
+  <p>The specification itself lives at <a href="https://focus.finops.org">focus.finops.org</a>. Use it as the source of truth.</p>
+
+  <section aria-labelledby="schema-maps">
+    <h2 id="schema-maps">Schema maps</h2>
+    <p>One-page maps of the FOCUS columns, grouped by category, for each specification version.</p>
+
+    <a class="primary" href="schema-maps/FOCUS_Schema_Maps.html">
+      <strong>Open the interactive schema maps</strong>
+      <span>Versions 1.0, 1.1, 1.2, 1.3, 1.4, and 1.5 (candidate) in one page.</span>
+    </a>
+
+    <p>Printable PDFs:</p>
+    <ul class="pdfs">
+      <li><a href="schema-maps/FOCUS_1.0_Schema_Map.pdf">FOCUS 1.0 schema map (PDF)</a></li>
+      <li><a href="schema-maps/FOCUS_1.1_Schema_Map.pdf">FOCUS 1.1 schema map (PDF)</a></li>
+      <li><a href="schema-maps/FOCUS_1.2_Schema_Map.pdf">FOCUS 1.2 schema map (PDF)</a></li>
+      <li><a href="schema-maps/FOCUS_1.3_Schema_Map.pdf">FOCUS 1.3 schema map (PDF)</a></li>
+      <li><a href="schema-maps/FOCUS_1.4_Schema_Map.pdf">FOCUS 1.4 schema map (PDF)</a></li>
+      <li><a href="schema-maps/FOCUS_Schema_Maps.pdf">All versioned maps in one PDF</a></li>
+    </ul>
+
+    <div class="note" role="note">
+      <p><span class="badge">Pre-release</span> <strong>FOCUS 1.5 is a Candidate Release, pending ratification Dec 3, 2026.</strong> The 1.5 sheet may still change before ratification (IP review Nov 2&ndash;Dec 1, 2026; ratification vote Dec 3, 2026). There is no standalone 1.5 PDF; open the 1.5 tab in the <a href="schema-maps/FOCUS_Schema_Maps.html">interactive map</a>.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="reference-architectures">
+    <h2 id="reference-architectures">Reference architectures</h2>
+    <a class="primary" href="reference-architectures/focus-reference-architectures.html">
+      <strong>Open the FOCUS reference architectures</strong>
+      <span>Reference architectures for working with FOCUS data.</span>
+    </a>
+  </section>
+</main>
+
+<footer>
+  <p>Unofficial community project by Beau Nelford, acting in a personal and community capacity. Not an official FOCUS, FinOps Foundation, or Linux Foundation publication.</p>
+  <p>Code, HTML, and JavaScript are licensed under MIT. Written documentation is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Product names and marks belong to their owners.</p>
+  <p>Source and issues: <a href="https://github.com/beau-finopsorg/focus-tools">github.com/beau-finopsorg/focus-tools</a>. Specification: <a href="https://focus.finops.org">focus.finops.org</a>.</p>
+</footer>
+
+</div>
+</body>
+</html>

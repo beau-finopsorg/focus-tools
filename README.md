@@ -6,6 +6,14 @@ Community reference tools for working with the FinOps Open Cost and Usage Specif
 
 These tools are a personal and community project by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. They are not official FOCUS, FinOps Foundation, or Linux Foundation publications, and they do not state a project position. See [DISCLAIMER.md](DISCLAIMER.md).
 
+## Website
+
+The tools are published at https://beau-finopsorg.github.io/focus-tools/. That site is the interactive schema maps (FOCUS 1.0 through 1.5), the version PDFs, and the reference architectures, with the unofficial banner on the landing page.
+
+Version 1.5 is a Candidate Release, pending ratification on Dec 3, 2026, and may change. It has no standalone PDF; use the 1.5 tab in the interactive map.
+
+The site is GitHub Pages from the `main` branch, root (`/`) folder. There is no build step: `index.html` is the landing page, and changes pushed to `main` go live as they are.
+
 ## What is here
 
 - [Schema maps](schema-maps/FOCUS_Schema_Maps.html): interactive HTML, plus PDFs for specification versions 1.0 through 1.4. The 1.5 sheet is a candidate / pre-release and may change.
