@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOCUS Reference Architectures — Compose &amp; Validate a Pattern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+.unofficial-banner{
+  margin: 1rem 0 1.5rem;
+  padding: .9rem 1.1rem;
+  background: #fff8e8;
+  border: 1px solid #e6d19a;
+  border-radius: 8px;
+  color: #3a2a00;
+  font-size: .95rem;
+  line-height: 1.45;
+}
+.unofficial-banner p{margin:0;}
+.site-header,.burger,nav.drawer,.has-drawer .drawer{display:none !important;}
+
+  :root{
+    --purple:#bd3bfd; --purple-tint:#f3e8ff;
+    --green:#1fa382; --amber:#e8871e; --red:#c0392b;
+    --dark:#2B3F50;
+    --text:rgba(0,0,0,.92); --text-2:rgba(0,0,0,.72); --muted:rgba(0,0,0,.56);
+    --bd-08:rgba(0,0,0,.08); --bd-12:rgba(0,0,0,.12); --bd-24:rgba(0,0,0,.24);
+    --bg:#fff; --tint:rgba(0,0,0,.02); --panel:#f9fafa;
+    --card-shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+    --radius:8px;
+    --header-h:74px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"IBM Plex Sans",sans-serif;color:var(--text);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--purple);text-decoration:none}a:hover{text-decoration:underline}
+  code,.font-mono{font-family:"IBM Plex Mono",monospace}
+  pre,pre code{font-family:"Source Code Pro",monospace}
+
+  header.site{background:var(--dark);color:#fff;padding:22px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  header.site .brand{display:flex;align-items:center;gap:14px}
+  header.site img{height:30px;display:block}
+  header.site .titles h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px}
+  header.site .titles p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.72)}
+  header.site .spacer{flex:1}
+  .ver-pill{font-size:11.5px;font-weight:500;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;padding:5px 11px;border-radius:999px}
+  .persona-pill{font-size:11px;font-weight:500;background:rgba(189,59,253,.2);border:1px solid rgba(189,59,253,.5);color:#fff;padding:5px 11px;border-radius:999px}
+
+  .layout{display:flex;align-items:flex-start;min-height:calc(100vh - 74px)}
+  aside.panel{width:330px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;border-right:1px solid var(--bd-08);background:var(--panel);padding:20px 18px 48px}
+  main.stage{flex:1;min-width:0;padding:22px 34px 80px;overflow-x:hidden}
+
+  .panel h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 10px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .panel .group{margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid var(--bd-08)}
+  .panel .group:last-child{border-bottom:none}
+
+  .pat-card{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid var(--bd-12);background:#fff;border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;transition:all .15s ease;font-family:inherit}
+  .pat-card:hover{border-color:var(--bd-24)}
+  .pat-card.active{border-color:var(--purple);background:var(--purple-tint);box-shadow:0 0 0 1px var(--purple)}
+  .pat-card .pc-top{display:flex;align-items:center;gap:8px}
+  .pat-card .pc-dot{width:9px;height:9px;border-radius:999px;flex:none}
+  .pat-card .pc-name{font-weight:600;font-size:13px;color:var(--text)}
+  .pat-card .pc-tag{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+  .facet .facet-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .facet .facet-head .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .facet .facet-head .fx-name{font-size:12.5px;font-weight:700;color:var(--text)}
+  .facet .facet-head .fx-num{font-size:10px;color:#fff;background:var(--dark);border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+  .facet .facet-sub{font-size:10.5px;color:var(--muted);margin:-4px 0 9px 24px;line-height:1.4}
+  .opt-radio{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;background:none;border:1px solid transparent;font-family:inherit;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s;margin-bottom:2px}
+  .opt-radio:hover{background:#fff}
+  .opt-radio .rb{width:15px;height:15px;border-radius:999px;border:2px solid var(--bd-24);flex:none;margin-top:1px;position:relative;transition:all .12s}
+  .opt-radio.sel .rb{border-color:var(--purple)}
+  .opt-radio.sel .rb::after{content:"";position:absolute;inset:2px;border-radius:999px;background:var(--purple)}
+  .opt-radio .rl{font-size:12px;color:var(--text-2);line-height:1.35}
+  .opt-radio.sel .rl{color:var(--text);font-weight:600}
+  .opt-radio .info{margin-left:auto;font-size:10px;color:var(--purple);opacity:0;flex:none;align-self:center}
+  .opt-radio:hover .info{opacity:1}
+  /* checkbox variant for cross-cutting */
+  .opt-radio.check .rb{border-radius:4px}
+  .opt-radio.check.sel .rb::after{border-radius:1px}
+
+  .reset-btn{width:100%;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-2);background:#fff;border:1px solid var(--bd-12);border-radius:var(--radius);padding:9px;cursor:pointer}
+  .reset-btn:hover{border-color:var(--bd-24)}
+  .panel .hint{font-size:11px;color:var(--muted);line-height:1.5}
+
+  /* buy vs build banner */
+  .bb-banner{background:#fff;border:1px solid var(--bd-12);border-left:4px solid var(--purple);border-radius:var(--radius);padding:13px 16px;margin-bottom:20px;box-shadow:var(--card-shadow);display:flex;gap:12px;align-items:flex-start}
+  .bb-banner .bb-ic{flex:none;width:26px;height:26px;border-radius:6px;background:var(--purple-tint);color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .bb-banner p{margin:0;font-size:12.5px;color:var(--text-2);line-height:1.55}
+  .bb-banner b{color:var(--text)}
+
+  .verdict{border-radius:12px;padding:18px 20px;margin-bottom:26px;box-shadow:var(--card-shadow);border:1px solid var(--bd-08);position:relative;overflow:hidden}
+  .verdict::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+  .verdict.good::before{background:var(--green)}
+  .verdict.warn::before{background:var(--amber)}
+  .verdict.bad::before{background:var(--red)}
+  .verdict .v-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .v-badge{font-size:13px;font-weight:700;padding:5px 13px;border-radius:999px;color:#fff;display:inline-flex;align-items:center;gap:7px}
+  .verdict.good .v-badge{background:var(--green)}
+  .verdict.warn .v-badge{background:var(--amber)}
+  .verdict.bad .v-badge{background:var(--red)}
+  .v-match{font-size:12px;color:var(--text-2)}
+  .v-match b{color:var(--purple)}
+  .v-disclaimer{font-size:11px;color:var(--muted);margin:8px 0 0;font-style:italic}
+  .v-narrative{font-size:13.5px;color:var(--text-2);margin:11px 0 0;line-height:1.6}
+  .v-narrative .chip{font-weight:600;color:var(--text);background:var(--tint);border:1px solid var(--bd-08);border-radius:5px;padding:1px 6px;font-size:12px;white-space:nowrap}
+  .findings{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .finding{display:flex;gap:10px;font-size:13px;line-height:1.5;padding:10px 12px;border-radius:var(--radius);background:var(--tint);border:1px solid var(--bd-08)}
+  .finding .fico{flex:none;width:18px;height:18px;border-radius:999px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .finding.good .fico{background:var(--green)}
+  .finding.warn .fico{background:var(--amber)}
+  .finding.bad .fico{background:var(--red)}
+  .finding .ftext{color:var(--text-2)}
+  .finding .ftext .font-mono{color:var(--text)}
+
+  .stage-title{font-size:13px;font-weight:700;color:var(--text-2);margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px}
+  .diagram-wrap{background:#fff;border:1px solid var(--bd-08);border-radius:12px;box-shadow:var(--card-shadow);padding:20px 8px 8px;margin-bottom:34px;overflow-x:auto}
+  .pipe{display:flex;align-items:stretch;gap:0;min-width:940px;padding:6px 12px 6px}
+  .stagecol{flex:1;min-width:172px;display:flex;flex-direction:column}
+  .stage-head{display:flex;align-items:center;gap:7px;margin:0 6px 12px}
+  .stage-head .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  .stage-head .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-2)}
+  .stage-head .num{font-size:10px;color:#fff;background:var(--dark);border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+  .nodecol{padding:0 6px}
+  .node{border:1px solid var(--bd-12);border-radius:var(--radius);background:#fff;padding:10px 11px;cursor:pointer;transition:all .13s ease;position:relative}
+  .node:hover{border-color:var(--purple);box-shadow:0 2px 8px rgba(189,59,253,.12);transform:translateY(-1px)}
+  .node .lstripe{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--radius) 0 0 var(--radius)}
+  .node .n-name{font-size:12.5px;font-weight:600;line-height:1.3;padding-left:4px}
+  .node .n-sub{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.35;padding-left:4px}
+  .node .n-more{font-size:10px;color:var(--purple);font-weight:600;margin-top:6px;opacity:0;transition:opacity .13s;padding-left:4px}
+  .node:hover .n-more{opacity:1}
+  .node.flag-bad{border-color:var(--red)}.node.flag-bad .lstripe{background:var(--red)!important}
+  .node.flag-warn{border-color:var(--amber)}
+  .flowarrow{align-self:center;color:var(--bd-24);font-size:20px;padding:0 1px;flex:none;display:flex;align-items:center}
+  .osi-ribbon{margin:2px 12px 12px;font-size:11.5px;color:var(--purple);background:var(--purple-tint);border-radius:6px;padding:7px 12px;display:flex;align-items:center;gap:8px}
+  .osi-ribbon b{font-weight:700}
+  .stagecol.dim{opacity:.34;filter:grayscale(.4)}
+  .stagecol.dim .node{cursor:pointer}
+  .bypass-note{margin:2px 12px 14px;font-size:11.5px;color:#8a5a12;background:#fdf3e3;border:1px solid rgba(232,135,30,.35);border-radius:6px;padding:8px 12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+  .bypass-note b{color:var(--amber);font-weight:700}
+  .pat-card.buy{border-style:dashed;border-color:var(--bd-24)}
+  .pat-card.buy .pc-dot{background:var(--dark)}
+  .pat-card.buy .pc-name{color:var(--dark)}
+  .plain-line{font-size:12px;color:var(--text-2);margin:0 0 14px 30px;max-width:760px;background:var(--tint);border-radius:6px;padding:8px 12px}
+  .plain-line b{color:var(--text)}
+  .tip{position:relative;cursor:help;border-bottom:1px dotted var(--bd-24)}
+  .fx-name .tipdot{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:var(--bd-12);color:var(--text-2);font-size:9px;font-weight:700;margin-left:5px;cursor:help}
+
+  .lib-section{margin-bottom:36px;scroll-margin-top:16px}
+  .lib-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .lib-head .sw{width:14px;height:14px;border-radius:4px;flex:none}
+  .lib-head h3{font-size:16px;margin:0;font-weight:700}
+  .lib-head .num{font-size:11px;color:#fff;background:var(--dark);border-radius:999px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+  .lib-head .xnum{background:var(--purple)}
+  .lib-desc{font-size:12.5px;color:var(--text-2);margin:0 0 14px 30px;max-width:760px}
+  .opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .opt-card{border:1px solid var(--bd-08);border-radius:var(--radius);background:#fff;padding:13px 14px;box-shadow:var(--card-shadow);cursor:pointer;transition:all .13s ease;display:flex;flex-direction:column}
+  .opt-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+  .opt-card.selected{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
+  .opt-card .oc-name{font-size:13px;font-weight:600}
+  .opt-card .oc-sel{color:var(--purple);font-size:11px;font-weight:600}
+  .opt-card .oc-sub{font-size:11.5px;color:var(--text-2);margin-top:5px;flex:1}
+  .opt-card .oc-meta{display:flex;gap:6px;margin-top:9px}
+  .meta-chip{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--tint);border:1px solid var(--bd-08);color:var(--text-2);font-weight:600}
+  .opt-card .oc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .tag{font-size:10px;padding:2px 8px;border-radius:999px;background:var(--tint);color:var(--muted);border:1px solid var(--bd-08);font-weight:500}
+  .tag.sel{background:var(--purple-tint);color:var(--purple);border-color:transparent}
+
+  .scrim{position:fixed;inset:0;background:rgba(20,25,30,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:480px;max-width:92vw;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.16);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:50;overflow-y:auto}
+  .drawer.open{transform:translateX(0)}
+  .drawer .d-head{position:sticky;top:0;background:var(--dark);color:#fff;padding:20px 24px;z-index:2}
+  .drawer .d-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.6);font-weight:600;display:flex;align-items:center;gap:8px}
+  .drawer .d-eyebrow .sw{width:11px;height:11px;border-radius:3px}
+  .drawer .d-title{font-size:20px;font-weight:700;margin:8px 0 0;line-height:1.25}
+  .drawer .d-meta{display:flex;gap:7px;margin-top:10px}
+  .drawer .d-meta .meta-chip{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.24);color:#fff}
+  .drawer .d-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.14);border:none;color:#fff;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;line-height:1}
+  .drawer .d-close:hover{background:rgba(255,255,255,.26)}
+  .drawer .d-body{padding:22px 24px 60px}
+  .drawer .d-lead{font-size:14px;color:var(--text);margin:0 0 20px;line-height:1.6}
+  .d-block{margin-bottom:20px}
+  .d-block h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--purple);font-weight:700;margin:0 0 8px}
+  .d-block p{font-size:13.5px;color:var(--text-2);margin:0 0 8px;line-height:1.6}
+  .d-block ul{margin:0;padding-left:18px}
+  .d-block li{font-size:13.5px;color:var(--text-2);margin-bottom:6px;line-height:1.55}
+  .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:520px){.pros-cons{grid-template-columns:1fr}}
+  .pc-box{border:1px solid var(--bd-08);border-radius:var(--radius);padding:12px 13px;background:var(--tint)}
+  .pc-box h5{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .pc-box.good h5{color:var(--green)}.pc-box.bad h5{color:var(--red)}
+  .pc-box ul{margin:0;padding-left:16px}.pc-box li{font-size:12.5px;margin-bottom:5px;color:var(--text-2)}
+  .tool-row{display:flex;flex-wrap:wrap;gap:6px}
+  .tool-chip{font-size:11.5px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--bd-12);color:var(--text-2);font-weight:500}
+  .focus-note{background:var(--purple-tint);border-radius:var(--radius);padding:12px 14px;border-left:3px solid var(--purple)}
+  .focus-note p{color:var(--text);margin:0;font-size:13px;line-height:1.55}
+  .focus-note strong{color:var(--purple)}
+  .d-select-btn{width:100%;font-family:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--purple);border:none;border-radius:var(--radius);padding:11px;cursor:pointer;margin-top:6px}
+  .d-select-btn:hover{filter:brightness(1.05)}
+  .d-select-btn.is-sel{background:var(--green);cursor:default}
+
+  footer.site{background:var(--dark);color:rgba(255,255,255,.72);font-size:12px;padding:26px 34px;line-height:1.6}
+  footer.site a{color:#fff}
+  footer.site .fnote{max-width:820px}
+
+  header.site .burger{display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:#fff;cursor:pointer;width:36px;height:36px;border-radius:8px;flex-shrink:0;padding:0}
+  header.site .burger:hover{background:rgba(255,255,255,.12)}
+  header.site .burger svg{width:20px;height:20px}
+
+  @media (max-width:1023px){aside.panel{width:290px}main.stage{padding:20px 20px 60px}}
+  @media (max-width:767px){
+    html{font-size:12px}
+    .layout{flex-direction:column}
+    aside.panel{position:relative;width:100%;height:auto;border-right:none;border-bottom:1px solid var(--bd-08)}
+    main.stage{width:100%;padding:18px 16px 60px}
+    header.site{padding:16px}
+    .drawer{width:100%}
+  }
+</style>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/value-chain.css">
+</head>
+<body>
+<aside class="unofficial-banner">
+  <p><strong>Unofficial community project.</strong> Prepared by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is not an official FOCUS, FinOps Foundation, or Linux Foundation publication. Ratings below are a reading of public documentation. They are not a certification result. Official certification, where it exists, is labeled separately as FinOps Certified FOCUS Conformant.</p>
+</aside>
+
+
+<header class="site">
+  <button class="burger" aria-label="Open site navigation">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+  </button>
+  <div class="brand">
+    <div class="titles">
+      <h1>Reference Architectures</h1>
+      <p>Compose a FOCUS stack from the filters &mdash; and see whether it holds up as a design pattern</p>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <span class="persona-pill">For FinOps data &amp; platform architects</span>
+  <span class="ver-pill">FOCUS v1.4 &middot; June 2026</span>
+</header>
+
+<div class="layout">
+  <!-- ============ LEFT PANEL ============ -->
+  <aside class="panel">
+    <div class="group">
+      <h2>Quick-start patterns</h2>
+      <div id="patList"></div>
+      <p class="hint">Load a proven stack, then tweak the filters below.</p>
+    </div>
+
+    <div id="facets"></div>
+
+    <div class="group" style="border-bottom:none">
+      <button class="reset-btn" id="resetBtn">&#8635;&nbsp; Reset filters</button>
+      <p class="hint" style="margin-top:10px">Pick one option per aspect. The main panel scores the combination for internal consistency and explains any conflicts.</p>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN STAGE ============ -->
+  <main class="stage">
+    <!-- One-minute FOCUS story (shared component: assets/value-chain.*) -->
+    <figure class="focus-vc" data-focus-value-chain data-variant="full" style="margin-bottom:18px"></figure>
+
+    <div class="bb-banner">
+      <div class="bb-ic">?</div>
+      <p><b>Build or buy?</b> This page maps the components of a <b>build-your-own</b> FinOps data stack. Many teams instead <b>buy a packaged FinOps platform</b> (for example a cloud-native cost tool, or vendors such as Vantage, Cloudability/Apptio, Finout, or nOps) that collapses most of these five layers into one product. Build for control and multi-source unification; buy for speed and lower operational burden. If you are just starting, buying is often the faster path to value.</p>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+
+    <div class="stage-title">Your composed pipeline</div>
+    <div class="diagram-wrap"><div id="bypassNote"></div><div class="pipe" id="pipe"></div><div id="osiRibbon"></div></div>
+
+    <div class="stage-title">Every option, by aspect</div>
+    <div id="library"></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="d-head">
+    <button class="d-close" id="dClose" aria-label="Close">&times;</button>
+    <div class="d-eyebrow" id="dEyebrow"></div>
+    <div class="d-title" id="dTitle"></div>
+    <div class="d-meta" id="dMeta"></div>
+  </div>
+  <div class="d-body" id="dBody"></div>
+</div>
+
+<footer class="site">
+  <div class="fnote">
+    <p style="margin:0 0 8px">FOCUS (the FinOps Open Cost and Usage Specification) is an open specification that normalizes billing datasets across AI, cloud, SaaS, data center, and other technology vendors to reduce complexity for FinOps Practitioners. These reference architectures are illustrative decision aids for teams building their own stack; vendor names are examples, not endorsements, and the verdicts are internal-consistency heuristics, not FOCUS conformance certification or a fit assessment for your organization.</p>
+    <p style="margin:0 0 8px">The FinOps Open Cost and Usage Specification is published at <a href="https://focus.finops.org">https://focus.finops.org</a> and is licensed under CC BY 4.0. If a tool here and the specification disagree, the specification is right.</p>
+    <p style="margin:0;color:rgba(255,255,255,.5)">Unofficial community project by Beau Nelford. Specification licensed under CC BY 4.0. For specification feedback: <a href="https://focus.finops.org/feedback/" style="color:inherit">focus.finops.org/feedback</a>.</p>
+  </div>
+</footer>
+
+<script>
+/* ============================================================ DATA ============================================================ */
+const LAYERS=[
+  {id:"access",num:1,facet:"Ingestion",name:"Request FOCUS data",color:"#bd3bfd",
+   sub:"How you obtain conformant FOCUS datasets",
+   plain:"How you get your bills out of each provider and into a place you can work with them.",
+   desc:"How you obtain conformant FOCUS billing and usage datasets from providers — cloud, SaaS, AI, and data-center vendors — including the file format, delivery mechanism, and cadence."},
+  {id:"enrich",num:2,facet:"Cleaning & modeling",name:"Data enrichment & modeling",color:"#7c5cff",
+   sub:"How raw files become query-ready",
+   plain:"Tidying the raw bills and adding your business context (who owns what) so the numbers are trustworthy.",
+   desc:"How raw FOCUS files are landed, validated, cleaned, joined to business context, and shaped into query-ready models."},
+  {id:"kpi",num:3,facet:"Metric authoring",name:"KPIs & metric definitions",color:"#1fa382",
+   sub:"Where metrics are defined, once",
+   plain:"Writing down the exact definition of each number (like ‘monthly spend’) once, so everyone means the same thing.",
+   desc:"Where cost and usage metrics are defined once, unambiguously, so every downstream tool computes them the same way. (How those definitions travel between tools is the separate, cross-cutting Interchange choice below.)"},
+  {id:"semantic",num:4,facet:"Semantic engine",name:"Semantic engine",color:"#0a8fb3",
+   sub:"What serves governed metrics",
+   plain:"The shared calculator that hands every tool the same official numbers, so your dashboard and your CFO’s report match.",
+   desc:"The runtime that resolves metric definitions into governed queries and exposes them through consistent APIs."},
+  {id:"consume",num:5,facet:"Presentation",name:"UI & AI client layer",color:"#e8871e",
+   sub:"How numbers are consumed",
+   plain:"Where people actually see and ask questions of the numbers — dashboards, spreadsheets, or an AI assistant.",
+   desc:"How practitioners and agents actually consume the numbers — dashboards, embedded analytics, spreadsheets, and AI clients."}
+];
+
+/* Cross-cutting aspect (not a linear pipeline stage) */
+const XCUT={id:"interchange",facet:"Interchange & portability",name:"Metric interchange (optional)",color:"#bd3bfd",
+  sub:"Portable metric definitions across tools",
+  plain:"A common file format so a metric you defined in one tool can be reused in another without rewriting it.",
+  desc:"An optional, cross-cutting layer: a portable format so a metric defined once can move between authoring tools, semantic engines, BI, and AI without being re-implemented. It is not a pipeline stage and not mutually exclusive with metric authoring — you author metrics AND interchange them."};
+
+/* Build-vs-buy alternative (not a pipeline stage, not in the composer/verdict) */
+const BUYMETA={id:"buy",facet:"Build vs buy",name:"Buy a packaged platform",color:"#2B3F50"};
+
+const OPTIONS={
+  access:[
+    {id:"parquet-object",name:"Object-store export (Parquet)",effort:"Medium",cost:"$",primaryTools:["AWS Data Exports → S3","Azure exports → Blob","GCP BigQuery export → GCS"],
+     sub:"Columnar files in cloud storage. The default for scale.",
+     lead:"Providers write scheduled FOCUS datasets as Parquet into your object storage. The highest-throughput, lowest-cost path for anything beyond ad-hoc analysis.",
+     what:"AWS Data Exports offers a native FOCUS 1.0 export table (now generally available), which is distinct from CUR 2.0 — CUR 2.0 carries deeper AWS-only detail such as ECS/EKS split cost allocation that FOCUS 1.0 does not yet include, so many AWS teams export both. Azure Cost Management exports FOCUS to Blob Storage in Parquet (Snappy) or CSV (Gzip). GCP and Oracle also publish FOCUS-formatted exports. Files are partitioned by billing period and refreshed on a schedule.",
+     when:["More than a few million rows per month","You want columnar predicate pushdown and cheap storage","You are feeding a lakehouse or warehouse, not a human"],
+     pros:["Small footprint (Snappy-compressed columns)","Fast scans; reads only queried columns","Schema/types preserved — no CSV type-guessing","Native to Spark, DuckDB, Trino, warehouses"],
+     cons:["Not human-readable; needs an engine to open","Schema evolution across FOCUS versions needs handling","Partitioning/compaction is your responsibility"],
+     focus:"FOCUS defines the <em>columns and semantics</em>, not the file format — Parquet vs CSV is a delivery choice. Confirm each provider's FOCUS version: AWS Data Exports is on FOCUS 1.0 today, while Azure and others may target different versions, and column availability differs across v1.1–v1.4."},
+    {id:"csv-download",name:"Direct download (CSV)",effort:"Low",cost:"$",primaryTools:["Provider console download","Manual export UI"],
+     sub:"Human-readable flat files. Best for exploration.",
+     lead:"Pull a FOCUS CSV straight from the provider console or a signed URL. The lowest-friction way to see conformant data with zero infrastructure.",
+     what:"Azure and other providers offer FOCUS CSV (optionally Gzip-compressed). You download the file and open it in a spreadsheet, notebook, or load it into DuckDB/SQLite for quick queries.",
+     when:["Proof-of-concept or a one-off analysis","A single account or small billing scope","Handing a file to a non-technical stakeholder"],
+     pros:["Opens anywhere — Excel, notebooks, text editors","Zero pipeline to stand up","Easy to diff and eyeball"],
+     cons:["Type ambiguity (dates, decimals, nulls)","Large scopes become unwieldy fast","No pushdown — whole file read every query","Not automated"],
+     focus:"Watch cost columns: <span class=\"font-mono\">BilledCost</span> (cash-basis) and <span class=\"font-mono\">EffectiveCost</span> (amortized) are distinct, as are <span class=\"font-mono\">ListCost</span> and <span class=\"font-mono\">ContractedCost</span>. CSV type-coercion can silently mangle currency precision. Validate against the FOCUS spec's data types."},
+    {id:"api-pull",name:"Billing / usage API pull",effort:"High",cost:"$",primaryTools:["Provider cost APIs","SDK ingestion jobs"],
+     sub:"Programmatic retrieval on your own cadence.",
+     lead:"Call the provider's billing or export-management API to trigger and retrieve FOCUS datasets programmatically, wiring ingestion into your own orchestration.",
+     what:"Rather than relying on console downloads, you script export creation and retrieval, then read the produced files. Useful when you manage many accounts or need tight control over refresh timing and back-fills.",
+     when:["Many linked accounts / subscriptions / projects","You already run an orchestrator (Airflow, Dagster, etc.)","You need programmatic back-fill and re-statement handling"],
+     pros:["Fully automatable and idempotent","Central control across many billing scopes","Easier historical back-fills"],
+     cons:["More engineering than a scheduled export","API rate limits and pagination to manage","Provider APIs are not themselves standardized"],
+     focus:"The API is the <em>generator</em> side. Your job as a <em>consumer</em> is to normalize whatever each API returns into the FOCUS column set; a converter step often sits right here."},
+    {id:"saas-ai-dc",name:"SaaS / AI / data-center billing",effort:"Medium",cost:"$",primaryTools:["Vendor FOCUS exports","SaaS/AI cost APIs","Data-center / on-prem cost feeds"],
+     sub:"Non-cloud FOCUS sources — the fastest-growing frontier.",
+     lead:"FOCUS is not just for the hyperscalers. SaaS platforms, AI/LLM vendors, and data-center or on-prem cost sources increasingly emit or can be mapped to FOCUS, and unifying them is where FOCUS's cross-domain value grows fastest.",
+     what:"FOCUS v1.x explicitly targets AI, cloud, SaaS, data center, and other technology vendors. Some SaaS/AI vendors publish native FOCUS-conformant exports; others expose bespoke cost APIs that you map to FOCUS via a converter. Data-center and on-prem spend can be modeled into FOCUS columns to sit alongside cloud in one dataset.",
+     when:["You need one view across cloud + SaaS + AI + on-prem","AI/LLM token spend is material and needs allocation","You are consolidating tool sprawl into a single cost model"],
+     pros:["Extends FinOps beyond cloud to total tech spend","One schema for wildly different vendors","Rides FOCUS's expanding conformance ecosystem"],
+     cons:["Native FOCUS support is uneven across SaaS/AI vendors","Often requires per-vendor mapping (converter)","Some vendors expose limited cost granularity"],
+     focus:"This is where FOCUS is heading and a core reason the spec exists: normalizing <em>all</em> technology value, not only cloud. Check whether a vendor emits native FOCUS and at which version; if not, pair this with the converter option. Track the FOCUS Conformance Program for validated non-cloud generators."},
+    {id:"converter",name:"FOCUS converter / normalizer",effort:"Medium",cost:"$",primaryTools:["FOCUS Converter (community)","Vendor converters (AWS/Azure/GCP/Oracle)"],
+     sub:"Transform pre-FOCUS or partial data into conformant FOCUS.",
+     lead:"When a source doesn't emit native FOCUS — or emits an older version — a converter maps its native billing schema onto FOCUS columns before anything downstream runs.",
+     what:"Community and vendor converters translate native cost exports (AWS CUR, Azure legacy, GCP billing, Oracle cost reports, and increasingly SaaS/AI vendors) into FOCUS. The bridge for providers not yet publishing native, current-version FOCUS.",
+     when:["A provider only offers native (non-FOCUS) billing","You must unify multiple clouds to one FOCUS version","A SaaS/AI vendor exposes a bespoke cost schema"],
+     pros:["Unifies heterogeneous sources to one schema","Decouples you from per-provider quirks","Path to normalize long-tail SaaS/AI spend"],
+     cons:["Mapping fidelity varies by source richness","Maintenance burden as sources change","Some columns may be unmappable (left null)"],
+     focus:"Converters are how the ecosystem reaches conformance before every vendor ships native FOCUS. Track the <strong>FOCUS Conformance Program</strong> (a generator conformance certification launching in 2026) — it signals which providers produce validated FOCUS so you can retire custom mappings."}
+  ],
+  enrich:[
+    {id:"direct-query",name:"Direct query (no transform)",effort:"Low",cost:"$",primaryTools:["DuckDB","Trino / Athena","Warehouse external tables"],
+     sub:"Query the FOCUS files in place. Minimal moving parts.",
+     lead:"Point a query engine at the FOCUS files and query them directly — no ETL, no copies. The leanest possible enrichment layer.",
+     what:"Engines like DuckDB or serverless SQL (Athena/Trino/BigQuery external tables) read Parquet/CSV in place. You add enrichment only as SQL views over the raw files when needed. Note single-node engines like DuckDB are excellent up to mid volumes but strain on multi-year, multi-account, billion-row cost data.",
+     when:["Small-to-mid data volumes","You value simplicity over pipeline sophistication","Exploratory or single-team use"],
+     pros:["Almost nothing to operate or schedule","Always reflects the latest exported files","Cheap — no duplicate storage"],
+     cons:["No persisted data-quality guarantees","Re-derives everything each query","Business context (tags, owners) joined ad hoc","Single-node engines strain at very high row counts"],
+     focus:"Works well because FOCUS is already normalized at the source — much of the cleaning other datasets need is done by the spec. You mostly join <span class=\"font-mono\">Tags</span> and org context, not reshape the schema."},
+    {id:"medallion",name:"Medallion lakehouse (Bronze/Silver/Gold)",effort:"High",cost:"$$$",primaryTools:["Databricks","Snowflake","Microsoft Fabric","dbt on a lakehouse"],
+     sub:"An organizing pattern: raw → conformed → business-ready.",
+     lead:"The canonical enterprise pattern. Data moves through Bronze (raw), Silver (validated/enriched), and Gold (business-ready) layers, each raising quality and trust. Note this is a design pattern you implement on a warehouse or lakehouse, often with dbt — not a tool in itself.",
+     what:"Bronze lands raw FOCUS exports verbatim with lineage columns. Silver validates types and conformance, de-duplicates re-stated periods, and enriches with tags, cost centers, ownership, and currency handling. Gold produces de-normalized, read-optimized marts aligned to KPIs and use cases. Consider a table format (Iceberg/Delta) and an incremental strategy for late-arriving and restated bills.",
+     when:["Multi-cloud / multi-source at scale","You need auditability and reproducibility","Multiple teams consume the same governed data"],
+     pros:["Clear separation of raw vs. trusted data","Auditable lineage and re-statement handling","Gold marts are fast and consumer-friendly","Scales to billions of line items"],
+     cons:["Most infrastructure and ownership to run","Layer sprawl if governance is weak","Latency from raw to Gold (batch cadence)"],
+     focus:"Because FOCUS conforms data at the <em>generator</em>, your Bronze→Silver work is lighter than usual: less schema wrangling, more enrichment (allocation, ownership, amortization views over <span class=\"font-mono\">EffectiveCost</span> and <span class=\"font-mono\">BilledCost</span>). Re-stated billing periods are the main Silver-layer concern."},
+    {id:"warehouse",name:"Cloud data warehouse + dbt",effort:"Medium",cost:"$$",primaryTools:["Snowflake","BigQuery","Redshift","dbt Core / Cloud"],
+     sub:"Load into a warehouse; model with dbt.",
+     lead:"Load FOCUS data into a columnar warehouse and transform it with dbt into tested, documented, version-controlled models. (You can and often do apply the medallion pattern here too.)",
+     what:"An ELT approach: ingest FOCUS files, then use dbt to build staging → intermediate → mart models with data tests, documentation, and lineage. The practical middle ground between direct-query and a full lakehouse.",
+     when:["You already run a warehouse and dbt","You want tests + docs + lineage as code","Team is SQL-first rather than Spark-first"],
+     pros:["Software-engineering rigor (tests, CI, versioning)","Great lineage and documentation","Huge ecosystem and hiring pool"],
+     cons:["Warehouse compute cost on large scans","Batch, not streaming","Still need object storage for raw landing"],
+     focus:"dbt models are where FOCUS <em>use-case queries</em> become reusable models. The FOCUS project publishes reference SQL Queries tied to Use Cases — excellent seeds for your staging/mart layer."}
+  ],
+  kpi:[
+    {id:"focus-usecases",name:"FOCUS Use Cases & Queries",effort:"Low",cost:"$",primaryTools:["FOCUS Use Case library","FOCUS reference SQL"],
+     sub:"Spec-backed KPIs and ready-made SQL.",
+     lead:"Start from the FOCUS project's own library of Use Cases and reference Queries — chargeback, showback, unit economics, commitment coverage — each mapped to the columns it needs.",
+     what:"FOCUS ships Use Cases (FinOps scenarios) linked to Capabilities, KPIs, personas, and reference SQL Queries. Because they reference canonical column names, they are portable across any conformant dataset.",
+     when:["You want proven, portable metric logic","You're standing up FinOps reporting from scratch","You value spec alignment over bespoke definitions"],
+     pros:["Portable across every conformant provider","Community-maintained and reviewed","Directly tied to spec columns — unambiguous"],
+     cons:["Generic; still needs your org's context layered in","Coverage grows over time — not every KPI exists yet"],
+     focus:"The FOCUS-native answer to \"what should our KPIs be.\" Queries reference columns like <span class=\"font-mono\">BilledCost</span>, <span class=\"font-mono\">EffectiveCost</span>, <span class=\"font-mono\">ChargeCategory</span>, and <span class=\"font-mono\">ChargePeriodStart</span>, so they run unchanged on any conformant dataset. Pick the cost column that matches the question: <span class=\"font-mono\">BilledCost</span> for invoice reconciliation, <span class=\"font-mono\">EffectiveCost</span> for amortized unit economics."},
+    {id:"metricflow",name:"dbt MetricFlow metrics",effort:"Medium",cost:"$",primaryTools:["dbt Semantic Layer","MetricFlow (OSS)"],
+     sub:"Metrics as code, next to your dbt models.",
+     lead:"Define metrics declaratively in dbt's MetricFlow so they live in version control beside the models they aggregate, with consistent time-grain and dimension handling.",
+     what:"MetricFlow compiles metric definitions into correct SQL, handling joins, granularity, and aggregation. dbt Labs open-sourced MetricFlow under Apache 2.0 in October 2025, so you can run it against dbt Core locally. Note MetricFlow is also the engine behind the dbt Semantic Layer, so choosing it here pairs most naturally with that serving layer.",
+     when:["dbt is already your transformation layer","You want metrics governed as code with CI","SQL-first teams"],
+     pros:["Metrics versioned and tested like code","Open-source core (Apache 2.0)","Consistent time-grain / aggregation logic","Feeds the dbt Semantic Layer directly"],
+     cons:["Tied to the dbt ecosystem","Requires disciplined modeling upstream","Serving layer/API is a separate concern"],
+     focus:"A pragmatic way to encode FOCUS KPIs as governed code. MetricFlow definitions can also be interchanged toward OSI (see the Interchange aspect), giving a migration path if you later diversify tools."},
+    {id:"custom-sql",name:"Custom SQL metric definitions",effort:"Low",cost:"$",primaryTools:["Warehouse views","BI-tool calc fields"],
+     sub:"Hand-rolled metric SQL. Max control, max drift risk.",
+     lead:"Define each KPI as bespoke SQL in views or inside individual BI tools. Fastest to start, hardest to keep consistent.",
+     what:"Metrics live as SQL views or per-tool calculated fields. There is no shared metric contract; correctness depends on discipline and review.",
+     when:["Very small team / single BI tool","Highly bespoke metrics no standard covers","Prototype before adopting a metric standard"],
+     pros:["No new tooling to learn","Unlimited flexibility","Fast for a single consumer"],
+     cons:["Definitions drift across tools and people","No portability — rewrite per consumer","Hard to audit ‘which query is canonical’"],
+     focus:"The anti-pattern FOCUS + a metric standard exist to prevent: two teams computing “monthly spend” off <span class=\"font-mono\">BilledCost</span> vs <span class=\"font-mono\">EffectiveCost</span> and never reconciling. Fine to start here; plan to graduate to MetricFlow (and OSI for portability)."}
+  ],
+  semantic:[
+    {id:"dbt-sl",name:"dbt Semantic Layer",effort:"Medium",cost:"$$",primaryTools:["dbt Cloud Semantic Layer","MetricFlow","JDBC/GraphQL APIs"],
+     sub:"Serves MetricFlow metrics to any consumer.",
+     lead:"The dbt Semantic Layer turns MetricFlow definitions into a live query service, so BI tools and apps request metrics (not raw tables) through consistent APIs.",
+     what:"It resolves metric requests into governed SQL against your warehouse at query time, exposing JDBC, GraphQL, and integrations. Strongest when dbt is already your transformation and metric home.",
+     when:["dbt is your transformation + metric layer","You want governed metrics without duplicating logic","Consumers are BI tools that integrate with dbt SL"],
+     pros:["Single source of metric truth","No pre-aggregation cubes to maintain","Tight fit with existing dbt investment"],
+     cons:["Best value requires dbt Cloud for serving","Query-time compute hits the warehouse","Integration breadth narrower than Cube"],
+     focus:"Pairs naturally with FOCUS-in-dbt: model FOCUS data, define KPIs in MetricFlow, serve them here. OSI interchange lets those definitions travel beyond dbt later."},
+    {id:"cube",name:"Cube (headless BI)",effort:"Medium",cost:"$$",primaryTools:["Cube Cloud / Core","REST/GraphQL/SQL APIs","Pre-aggregations"],
+     sub:"API-first semantic layer with caching for many consumers.",
+     lead:"Cube exposes one governed metric definition through REST, GraphQL, and a SQL API simultaneously, with pre-aggregations and caching for sub-second reads across BI, embedded apps, and AI copilots.",
+     what:"A headless BI layer: define cubes/views once, then any surface queries the same semantics. Multi-tenant security, pre-aggregations, and semantic caching target low-latency serving. An OSI founding participant. At FOCUS scale, pre-aggregation design is where you manage high-cardinality cost dimensions.",
+     when:["Multiple heterogeneous consumers (BI + embedded + AI)","You need low latency at scale","Embedded/multi-tenant analytics"],
+     pros:["One definition, many APIs (REST/GraphQL/SQL)","Pre-aggregations → fast reads","Strong for embedded + AI clients","OSI-aligned"],
+     cons:["Another service to operate","Pre-aggregation design has a learning curve","Overkill for a single BI tool"],
+     focus:"A strong fit for grounding AI on cost data: an AI copilot and a dashboard hit the <em>same</em> FOCUS metric definition, so a human and an agent get identical numbers for <span class=\"font-mono\">EffectiveCost</span> by service."},
+    {id:"atscale",name:"AtScale",effort:"High",cost:"$$$",primaryTools:["AtScale","MDX/DAX (Excel, Power BI)","Autonomous aggregates"],
+     sub:"Enterprise OLAP-heritage semantic layer.",
+     lead:"AtScale offers a mature, OLAP-rooted semantic layer with strong live Excel and Power BI connectivity via MDX/DAX and autonomous aggregates for performance.",
+     what:"An enterprise semantic platform recognized as a leader in GigaOm's 2025 semantic-layer/metric-store analysis. Its heritage is multidimensional analysis, making it strong for finance users living in Excel and pivot tables.",
+     when:["Large enterprise with Excel/Power BI-heavy finance","You need MDX/DAX live connectivity","Autonomous performance tuning matters"],
+     pros:["Excellent Excel/Power BI live connections","Mature enterprise governance","Autonomous aggregates for speed"],
+     cons:["Commercial/enterprise footprint and cost","Heavier than headless-BI options","Less ‘developer-native’ than Cube/dbt"],
+     focus:"A fit where FinOps reporting lives in finance's Excel/Power BI world. FOCUS's normalized columns map cleanly to OLAP dimensions (service, region, account) and measures (<span class=\"font-mono\">BilledCost</span>, <span class=\"font-mono\">EffectiveCost</span>)."},
+    {id:"warehouse-native",name:"Warehouse-native semantics",effort:"Low",cost:"$$",primaryTools:["Snowflake semantic views","Databricks metrics","BigQuery"],
+     sub:"Semantics inside the platform you already run.",
+     lead:"Define metrics within the data platform itself when you're a single-platform shop and want to avoid an extra service.",
+     what:"Snowflake, Databricks, and others increasingly offer native semantic/metric constructs so definitions live where the data does. Simplest operationally when you're all-in on one platform.",
+     when:["Single-platform shop (all Snowflake, all Databricks)","You want fewer moving parts","Platform-native governance is sufficient"],
+     pros:["No extra service to run","Governance and compute in one place","Tight platform integration"],
+     cons:["Portability limited to that platform","Fewer downstream API surfaces than Cube","Cross-platform metric sharing is harder"],
+     focus:"OSI interchange matters most here as an escape hatch: keeping FOCUS KPI definitions expressible in OSI prevents lock-in if you later add a second platform or BI tool."},
+    {id:"no-semantic",name:"No semantic layer (direct SQL)",effort:"Low",cost:"$",primaryTools:["BI direct-to-warehouse","Notebooks"],
+     sub:"BI/notebooks query models directly.",
+     lead:"Skip a dedicated semantic engine — BI tools and notebooks query Gold models or views straight from the warehouse.",
+     what:"Metric logic lives in the models/views or in each BI tool. Acceptable when there's one consumer and low governance need.",
+     when:["Single BI tool, single team","Prototype or small scope","You accept per-tool metric logic"],
+     pros:["Nothing extra to run","Direct and simple","Fine for one governed BI tool"],
+     cons:["Metric drift across consumers","No shared metric API for AI clients grounded on your data","Doesn’t scale to many surfaces"],
+     focus:"Viable precisely because FOCUS pre-normalizes the data, so a single Gold model can be ‘good enough.’ Revisit the moment a second consumer (especially an AI client meant to reflect your own metrics) appears."}
+  ],
+  consume:[
+    {id:"bi",name:"BI dashboards",effort:"Low",cost:"$$",primaryTools:["Tableau","Power BI","Sigma","Looker"],
+     sub:"Governed dashboards for practitioners and leaders.",
+     lead:"The default consumption surface: interactive dashboards for allocation, trends, anomalies, and commitment coverage, ideally querying the semantic layer rather than raw tables.",
+     what:"Tools like Tableau, Power BI, Sigma, and Looker render FOCUS-derived KPIs. Connecting them to the semantic layer keeps every dashboard on the same metric definitions.",
+     when:["Recurring reporting for FinOps + stakeholders","Self-service exploration by analysts","Executive and team-level scorecards"],
+     pros:["Familiar to practitioners and execs","Rich interactivity and sharing","Semantic-layer connection prevents drift"],
+     cons:["Drift returns if built on raw tables","Licensing at scale","Dashboard sprawl without governance"],
+     focus:"Point BI at the semantic layer, not raw FOCUS files, so “spend by service” means the same thing everywhere. FOCUS's canonical dimensions make cross-cloud dashboards possible at all."},
+    {id:"embedded",name:"Embedded / headless analytics",effort:"High",cost:"$$",primaryTools:["Cube + custom UI","Embedded Sigma/Looker","In-product charts"],
+     sub:"FOCUS metrics inside your own product or portal.",
+     lead:"Surface FOCUS-derived metrics inside an internal portal or a customer-facing product via APIs, rather than a standalone BI tool.",
+     what:"A headless semantic layer (e.g. Cube) feeds charts and tables embedded in your own application — internal cost portals or, for FinOps vendors, customer dashboards — with multi-tenant security and row-level access control.",
+     when:["You build an internal cost portal","You're a vendor exposing cost data to customers","You need bespoke UX beyond BI tools"],
+     pros:["Full control of UX and workflow","Multi-tenant, API-driven","Same definitions as BI/AI surfaces"],
+     cons:["Engineering to build and maintain","You own the UI layer","Needs a serving layer with caching"],
+     focus:"FOCUS is what makes this feasible for vendors serving many customers: one normalized schema and metric set instead of per-provider special-casing. FinOps tooling vendors are often both generators and consumers."},
+    {id:"ai-grounded",name:"AI copilot on the semantic layer",effort:"Medium",cost:"$$",primaryTools:["Cube AI API","dbt SL + LLM","FOCUS MCP Server"],
+     sub:"Natural-language Q&A grounded on YOUR governed metrics.",
+     lead:"Let practitioners ask cost questions in plain language, with the AI querying your semantic layer so answers inherit your governed FOCUS metric definitions instead of improvising SQL.",
+     what:"An AI client (often via the Model Context Protocol) is wired to your semantic engine or metric APIs. Because it resolves questions through governed definitions, a human and an agent return the same number. The FinOps Foundation also publishes a FOCUS MCP Server that surfaces the spec itself to any MCP-compatible model. In State of FinOps 2026, 81% of practitioners cited AI as an important productivity tool.",
+     when:["You want natural-language cost Q&A that matches dashboards","Agents automate anomaly / rightsizing workflows","Answers must reconcile to your governed metrics"],
+     pros:["Fast, conversational access for non-analysts","Grounded in your governed definitions","Human and agent see identical numbers","Rides open standards (MCP, OSI)"],
+     cons:["Requires a semantic layer to ground on","Governance/access control must be enforced","Standards young; tooling evolving fast"],
+     focus:"The whole stack pays off here: FOCUS-normalized data + governed metrics + a semantic engine means an AI client and a human get the <em>same</em> <span class=\"font-mono\">EffectiveCost</span>. This is the option that genuinely needs a semantic layer beneath it."},
+    {id:"ai-direct-mcp",name:"Direct-billing MCP server",effort:"Low",cost:"$",primaryTools:["AWS Billing & Cost Mgmt MCP","Vantage MCP","Finout MCP"],
+     sub:"AI queries the provider/vendor cost APIs directly.",
+     lead:"An MCP server exposes a provider's or vendor's own billing APIs to an AI assistant, so you get natural-language cost answers without building any semantic layer of your own.",
+     what:"Servers like the AWS Billing & Cost Management MCP, or vendor MCPs from Vantage and Finout, ground the AI on the provider's or tool's native cost data. This works standalone — no warehouse, no semantic engine required — because the grounding lives on the vendor side.",
+     when:["You want fast conversational cost answers with minimal build","You're happy with provider-native (not unified FOCUS) semantics","Single-cloud or single-vendor scope"],
+     pros:["Works with no semantic layer of your own","Very low build effort","Grounded on the vendor's authoritative data"],
+     cons:["Answers reflect provider-native data, not your unified FOCUS metrics","Fragmented across vendors (one MCP each)","Can diverge from your own dashboards' definitions"],
+     focus:"A legitimate, low-effort path that does <em>not</em> require the rest of this stack. The trade-off: it grounds on each vendor's own cost model, so it does not give you one unified, FOCUS-normalized answer across clouds and SaaS. If you also run your own semantic layer, plan to reconcile the two sources."},
+    {id:"sheets",name:"Spreadsheets & notebooks",effort:"Low",cost:"$",primaryTools:["Excel / Google Sheets","Jupyter","Python/pandas"],
+     sub:"Direct analysis for power users and one-offs.",
+     lead:"Analysts pull FOCUS data (or semantic-layer results) into spreadsheets and notebooks for ad-hoc modeling, forecasting, and deep dives.",
+     what:"Excel/Sheets via live connections (e.g. AtScale MDX/DAX) or exports; notebooks via warehouse/DuckDB queries or semantic-layer APIs. The workbench for bespoke analysis dashboards don't cover.",
+     when:["Ad-hoc modeling and forecasting","Data-science-style investigation","Finance users who live in Excel"],
+     pros:["Ultimate flexibility","Familiar to finance and analysts","Great for one-off deep dives"],
+     cons:["Easily disconnected from governed metrics","Version-control and reproducibility risks","Manual refresh unless live-connected"],
+     focus:"Lowest-governance surface — prefer a <em>live</em> connection to the semantic layer over static exports so spreadsheet numbers still reconcile to <span class=\"font-mono\">EffectiveCost</span> in the dashboards."}
+  ],
+  interchange:[
+    {id:"osi",name:"Open Semantic Interchange (OSI)",effort:"Medium",cost:"$",primaryTools:["OSI YAML spec","dbt MetricFlow","Cube","Snowflake / Tableau"],
+     sub:"Vendor-neutral format to move metric definitions between tools.",
+     lead:"Define a metric once and interchange it across BI tools, warehouses, and AI via OSI's vendor-neutral YAML, rather than re-implementing “effective cost per unit” in each tool. OSI is cross-cutting: you use it alongside your metric-authoring and semantic-engine choices, not instead of them.",
+     what:"OSI is an open, Apache 2.0 specification launched in September 2025 by Snowflake with Salesforce/Tableau, dbt Labs, Cube, and others, developed with dbt Labs' MetricFlow. It standardizes datasets, metrics, dimensions, relationships, and context so definitions interchange across tools. Backing grew past 60 organizations, with Google and AWS joining in November 2025.",
+     when:["You use multiple BI/semantic tools and want one truth","You're investing in AI/agent access to metrics","You want to avoid metric lock-in"],
+     pros:["Vendor-neutral, open (Apache 2.0)","Define once, consume across BI + AI","Reduces “why do two dashboards disagree” drift","Momentum: 60+ orgs incl. Google, AWS"],
+     cons:["Young standard (2025) — tooling still maturing","Adoption depth varies by vendor","Needs a semantic engine to actually execute the definitions"],
+     focus:"OSI and FOCUS are complementary but distinct: FOCUS normalizes the <em>data</em>; OSI normalizes the portable <em>metric definitions</em> computed on it. Note OSI is a Snowflake-led industry initiative, not a FinOps Foundation or FOCUS project — presenting it here is informational, not an endorsement. <span style=\"font-size:11px;color:var(--muted)\">(OSI cadence/tooling support: verify current status.)</span>"}
+  ],
+  buy:[
+    {id:"platform",name:"Buy a packaged FinOps platform",effort:"Low",cost:"$$–$$$",primaryTools:["Cloud-native cost tools","Vantage","Cloudability / Apptio","Finout","nOps"],
+     sub:"One product that collapses most of these five layers.",
+     lead:"Instead of assembling the stack on this page, buy a FinOps platform that ingests provider billing, models it, defines KPIs, and presents dashboards out of the box. For most teams starting out, this is the faster path to value.",
+     what:"Cloud-native cost tools and third-party platforms (for example Vantage, Cloudability/Apptio, Finout, and nOps, among others) handle ingestion through presentation as a managed product. Many now ingest or emit FOCUS-formatted data, and FinOps tool vendors are increasingly adopting FOCUS as a standard input and output.",
+     when:["You want value in days, not quarters","You lack a data-engineering team to build and run a pipeline","Your scope is standard cost reporting, allocation, and optimization"],
+     pros:["Fastest time to value","No pipeline to build or operate","Vendor maintains provider integrations","Prebuilt dashboards, alerts, and support"],
+     cons:["Subscription cost scales with spend or seats","Less control over bespoke models","Potential lock-in — check data export and FOCUS support","May not unify every long-tail SaaS/AI source"],
+     focus:"Ask any platform whether it ingests <em>and</em> exports FOCUS-conformant data. That keeps your data portable, lets you supplement or leave the tool later, and avoids re-normalizing if you switch. FinOps tooling vendors can be both FOCUS data generators and consumers."}
+  ]
+};
+
+const PATTERNS=[
+  {id:"starter",name:"Starter — Direct Query",color:"#1fa382",tag:"Fastest to stand up; single cloud or PoC.",
+   sel:{access:"csv-download",enrich:"direct-query",kpi:"focus-usecases",semantic:"no-semantic",consume:"bi",osi:false}},
+  {id:"medallion",name:"Medallion Lakehouse",color:"#7c5cff",tag:"Enterprise-grade, auditable, multi-source.",
+   sel:{access:"parquet-object",enrich:"medallion",kpi:"metricflow",semantic:"dbt-sl",consume:"bi",osi:false}},
+  {id:"headless",name:"Headless Semantic",color:"#0a8fb3",tag:"One metric definition, many surfaces.",
+   sel:{access:"parquet-object",enrich:"warehouse",kpi:"metricflow",semantic:"cube",consume:"embedded",osi:true}},
+  {id:"ai-native",name:"AI-Native / Agentic",color:"#e8871e",tag:"Grounded natural-language & agents as the primary surface.",
+   sel:{access:"api-pull",enrich:"medallion",kpi:"metricflow",semantic:"cube",consume:"ai-grounded",osi:true}}
+];
+
+/* ============================================================ RULES ENGINE ============================================================ */
+function evaluate(sel){
+  const f=[];
+  const nm=(l,i)=>optById(l,i).name;
+  const A=sel.access,E=sel.enrich,K=sel.kpi,S=sel.semantic,C=sel.consume,OSI=!!sel.osi;
+  const heavySem=["cube","atscale","dbt-sl","warehouse-native"];
+
+  // ingestion vs preparation / scale
+  if(A==="csv-download"&&E==="medallion")
+    f.push({sev:"bad",layers:["access","enrich"],msg:"Manual CSV downloads can't reliably feed an enterprise medallion lakehouse — CSV is an exploration/small-scope format and won't keep Bronze fed on a schedule. Use object-store Parquet exports (or an API pull) instead."});
+  else if(A==="csv-download"&&E==="warehouse")
+    f.push({sev:"warn",layers:["access"],msg:"Manual CSV downloads into a warehouse work for small scopes but aren't automated. For anything recurring, prefer scheduled object-store Parquet exports or an API pull."});
+  if(A==="csv-download"&&heavySem.includes(S))
+    f.push({sev:"warn",layers:["access","semantic"],msg:`A full semantic engine (${nm("semantic",S)}) on top of ad-hoc CSV downloads is over-built — the ingestion won't keep it fed automatically.`});
+
+  // dbt semantic layer prerequisites
+  if(S==="dbt-sl"&&E==="direct-query")
+    f.push({sev:"bad",layers:["semantic","enrich"],msg:"The dbt Semantic Layer serves metrics defined on dbt models. “Direct query / no transform” produces no dbt models for it to serve — add a warehouse+dbt or medallion modeling layer."});
+  if(S==="dbt-sl"&&K==="metricflow")
+    f.push({sev:"good",layers:["semantic","kpi"],msg:"dbt MetricFlow metrics feed the dbt Semantic Layer directly — metrics as code, served without duplication."});
+  else if(S==="dbt-sl"&&K!=="metricflow")
+    f.push({sev:"warn",layers:["semantic","kpi"],msg:`The dbt Semantic Layer consumes MetricFlow definitions. With metrics authored as ${nm("kpi",K)}, you'll need to re-express them in MetricFlow to serve them here.`});
+
+  // warehouse-native needs a hosting platform
+  if(S==="warehouse-native"&&E==="direct-query")
+    f.push({sev:"warn",layers:["semantic","enrich"],msg:"Warehouse-native semantics assume data lives in that platform. A pure query-in-place approach may leave nothing hosting the definitions — land the data in the platform first. (Viable if your ‘direct query’ engine IS that warehouse.)"});
+
+  // AI grounding — split by AI type
+  if(C==="ai-grounded"&&S==="no-semantic")
+    f.push({sev:"bad",layers:["consume","semantic"],msg:"An AI copilot meant to reflect YOUR governed metrics has nothing to query with no semantic layer — it improvises SQL and can silently disagree with your dashboards. Add a semantic engine (Cube, dbt SL, …). If you want AI without building this, use a Direct-billing MCP server instead."});
+  if(C==="ai-grounded"&&heavySem.includes(S))
+    f.push({sev:"good",layers:["consume","semantic"],msg:`${nm("semantic",S)} lets a dashboard and an AI copilot hit the same metric definition, so a human and an agent return the same EffectiveCost.`});
+  if(C==="ai-direct-mcp")
+    f.push({sev:"good",layers:["consume"],msg:"A direct-billing MCP server (e.g. AWS Billing & Cost Management MCP) grounds on the provider's own cost APIs, so it works without your semantic layer. Trade-off: answers reflect provider-native data, not your unified FOCUS metrics."});
+  if(C==="ai-direct-mcp"&&heavySem.includes(S))
+    f.push({sev:"warn",layers:["consume","semantic"],msg:`You now have two sources of truth: the provider's direct-billing MCP and your own ${nm("semantic",S)}. Expect to reconcile them, or route the AI through your semantic layer (the grounded-copilot option) for one consistent answer.`});
+
+  // embedded needs an API serving layer
+  if(C==="embedded"&&S==="no-semantic")
+    f.push({sev:"warn",layers:["consume","semantic"],msg:"Embedded analytics needs an API-driven serving layer. Without a headless semantic engine (e.g. Cube) you'll hand-build queries per view."});
+  else if(C==="embedded"&&S==="cube")
+    f.push({sev:"good",layers:["consume","semantic"],msg:"Cube's API-first, multi-tenant serving is a natural fit for embedded analytics."});
+
+  // metric drift
+  if(K==="custom-sql"&&S!=="no-semantic")
+    f.push({sev:"warn",layers:["kpi","semantic"],msg:`Hand-rolled SQL metrics bypass ${nm("semantic",S)}'s governed definitions, reintroducing drift. Author metrics in the engine (or MetricFlow) instead.`});
+  if(K==="custom-sql"&&S==="no-semantic"&&C!=="ai-grounded")
+    f.push({sev:"warn",layers:["kpi"],msg:"Custom SQL metrics with no semantic layer is the classic drift trap — different tools and people compute the same KPI differently. Fine to start; plan to graduate to MetricFlow."});
+
+  // OSI interchange (cross-cutting)
+  if(OSI&&S==="no-semantic")
+    f.push({sev:"warn",layers:["semantic"],msg:"OSI defines portable metrics but needs an engine to execute them. With no semantic layer there's nothing to run the OSI definitions — add an engine or drop OSI."});
+  else if(OSI&&heavySem.includes(S))
+    f.push({sev:"good",layers:["semantic"],msg:`OSI keeps your metric definitions portable across ${nm("semantic",S)} and any future tool — define once, consume in BI and AI, avoid lock-in.`});
+
+  // medallion feeding consumers with no shared contract
+  if(E==="medallion"&&S==="no-semantic")
+    f.push({sev:"warn",layers:["enrich","semantic"],msg:"A full medallion lakehouse feeding consumers directly (no semantic layer) works, but you lose a shared metric contract — each consumer can still drift."});
+
+  // positive: converter / conformance
+  if(A==="converter")
+    f.push({sev:"good",layers:["access"],msg:"A converter bridges non-native or older sources to FOCUS. Track the FOCUS Conformance Program (launching 2026) to retire custom mappings as providers ship validated native FOCUS."});
+
+  // positive: SaaS/AI/DC breadth
+  if(A==="saas-ai-dc")
+    f.push({sev:"good",layers:["access"],msg:"Pulling SaaS, AI, and data-center spend into FOCUS extends FinOps beyond cloud — the core reason the spec exists. Verify each vendor's native FOCUS support/version; pair with a converter where it's missing."});
+
+  // positive: FOCUS-native KPIs are portable
+  if(K==="focus-usecases")
+    f.push({sev:"good",layers:["kpi"],msg:"FOCUS Use-Case KPIs reference canonical columns, so they run unchanged on any conformant dataset — portable across providers."});
+
+  // verdict
+  let verdict;
+  if(f.some(x=>x.sev==="bad")) verdict={label:"Not a recommended pattern",tone:"bad",icon:"✕"};
+  else if(f.some(x=>x.sev==="warn")) verdict={label:"Workable — with caveats",tone:"warn",icon:"!"};
+  else verdict={label:"Internally consistent",tone:"good",icon:"✓"};
+
+  // matched named pattern
+  let matched=null;
+  PATTERNS.forEach(p=>{if(p.sel.access===A&&p.sel.enrich===E&&p.sel.kpi===K&&p.sel.semantic===S&&p.sel.consume===C&&!!p.sel.osi===OSI) matched=p;});
+
+  return {verdict,findings:f,matched};
+}
+
+/* ============================================================ STATE + RENDER ============================================================ */
+let selection={...PATTERNS[1].sel}; // default: Medallion Lakehouse
+const $=s=>document.querySelector(s);
+const optById=(l,id)=>OPTIONS[l].find(o=>o.id===id);
+const facetMeta=id=>id==="buy"?BUYMETA:(id==="interchange"?XCUT:LAYERS.find(l=>l.id===id));
+
+function renderPatternList(){
+  const el=$("#patList");el.innerHTML="";
+  const activePat=PATTERNS.find(p=>Object.keys(p.sel).every(k=>p.sel[k]===selection[k]));
+  PATTERNS.forEach(p=>{
+    const b=document.createElement("button");
+    b.className="pat-card"+(activePat&&activePat.id===p.id?" active":"");
+    b.innerHTML=`<div class="pc-top"><span class="pc-dot" style="background:${p.color}"></span><span class="pc-name">${p.name}</span></div><div class="pc-tag">${p.tag}</div>`;
+    b.onclick=()=>{selection={...p.sel};renderAll();};
+    el.appendChild(b);
+  });
+  const buy=document.createElement("button");
+  buy.className="pat-card buy";
+  buy.innerHTML=`<div class="pc-top"><span class="pc-dot"></span><span class="pc-name">Or: buy a packaged platform</span></div><div class="pc-tag">Skip the build. See when buying beats building &rarr;</div>`;
+  buy.onclick=()=>openDrawer("buy","platform");
+  el.appendChild(buy);
+}
+
+function renderFacets(){
+  const host=$("#facets");host.innerHTML="";
+  LAYERS.forEach(L=>{
+    const g=document.createElement("div");g.className="group facet";
+    let opts="";
+    OPTIONS[L.id].forEach(o=>{
+      const sel=selection[L.id]===o.id;
+      opts+=`<button class="opt-radio${sel?' sel':''}" data-layer="${L.id}" data-opt="${o.id}">
+        <span class="rb"></span><span class="rl">${o.name}</span><span class="info" data-info="1">details</span></button>`;
+    });
+    g.innerHTML=`<div class="facet-head"><span class="fx-num">${L.num}</span><span class="sw" style="background:${L.color}"></span><span class="fx-name">${L.facet}<span class="tipdot" title="In plain terms: ${L.plain}">i</span></span></div>
+      <div class="facet-sub">${L.sub}</div>${opts}`;
+    host.appendChild(g);
+  });
+  // cross-cutting interchange toggle
+  const g=document.createElement("div");g.className="group facet";
+  const on=!!selection.osi;
+  g.innerHTML=`<div class="facet-head"><span class="fx-num" style="background:var(--purple)">+</span><span class="sw" style="background:${XCUT.color}"></span><span class="fx-name">${XCUT.facet}<span class="tipdot" title="In plain terms: ${XCUT.plain}">i</span></span></div>
+    <div class="facet-sub">${XCUT.sub} (cross-cutting, optional)</div>
+    <button class="opt-radio check${on?' sel':''}" data-layer="interchange" data-opt="osi"><span class="rb"></span><span class="rl">Use OSI for portable metric definitions</span><span class="info" data-info="1">details</span></button>`;
+  host.appendChild(g);
+
+  host.querySelectorAll(".opt-radio").forEach(r=>{
+    r.onclick=(e)=>{
+      if(e.target.dataset.info){openDrawer(r.dataset.layer,r.dataset.opt);return;}
+      if(r.dataset.layer==="interchange"){selection.osi=!selection.osi;}
+      else{selection[r.dataset.layer]=r.dataset.opt;}
+      renderAll();
+    };
+  });
+}
+
+function verdictNarrative(){
+  const seg=(l,id)=>`<span class="chip">${optById(l,id).name}</span>`;
+  let s=`Ingest via ${seg("access",selection.access)} → prepare with ${seg("enrich",selection.enrich)} → author metrics as ${seg("kpi",selection.kpi)}`;
+  if(selection.osi) s+=` (interchanged via <span class="chip">OSI</span>)`;
+  s+=` → serve through ${seg("semantic",selection.semantic)} → consume in ${seg("consume",selection.consume)}.`;
+  return s;
+}
+
+let lastEval=null;
+function renderVerdict(){
+  const ev=evaluate(selection);lastEval=ev;const v=ev.verdict;
+  const box=$("#verdict");box.className="verdict "+v.tone;
+  const order={bad:0,warn:1,good:2};
+  const sorted=[...ev.findings].sort((a,b)=>order[a.sev]-order[b.sev]);
+  const findHtml=sorted.map(x=>{
+    const ic=x.sev==="good"?"✓":x.sev==="warn"?"!":"✕";
+    return `<div class="finding ${x.sev}"><span class="fico">${ic}</span><span class="ftext">${x.msg}</span></div>`;
+  }).join("");
+  const match=ev.matched?`<span class="v-match">Matches the <b>${ev.matched.name}</b> reference pattern.</span>`:`<span class="v-match">Custom combination.</span>`;
+  box.innerHTML=`<div class="v-top"><span class="v-badge">${v.icon} ${v.label}</span>${match}</div>
+    <p class="v-disclaimer">This grades internal consistency of the components, not whether the stack fits your scale, budget, team skills, or data volume — and it is not FOCUS conformance certification.</p>
+    <p class="v-narrative">${verdictNarrative()}</p>
+    <div class="findings">${findHtml||'<div class="finding good"><span class="fico">✓</span><span class="ftext">No conflicts detected across the selected components.</span></div>'}</div>`;
+}
+
+function flaggedLayers(){
+  const bad=new Set(),warn=new Set();
+  (lastEval?lastEval.findings:[]).forEach(x=>{
+    if(x.sev==="bad")(x.layers||[]).forEach(l=>bad.add(l));
+    else if(x.sev==="warn")(x.layers||[]).forEach(l=>warn.add(l));
+  });
+  return {bad,warn};
+}
+
+function renderPipe(){
+  const {bad,warn}=flaggedLayers();
+  const bypass=selection.consume==="ai-direct-mcp";
+  const pipe=$("#pipe");pipe.innerHTML="";
+  LAYERS.forEach((L,i)=>{
+    const o=optById(L.id,selection[L.id]);
+    const cls=bad.has(L.id)?" flag-bad":(warn.has(L.id)?" flag-warn":"");
+    const dim=bypass&&L.id!=="consume";
+    const col=document.createElement("div");col.className="stagecol"+(dim?" dim":"");
+    col.innerHTML=`<div class="stage-head"><span class="num">${L.num}</span><span class="sw" style="background:${L.color}"></span><span class="lbl">${L.facet}</span></div>
+      <div class="nodecol"><div class="node${cls}" data-layer="${L.id}" data-opt="${o.id}">
+        <span class="lstripe" style="background:${L.color}"></span>
+        <div class="n-name">${o.name}</div><div class="n-sub">${o.sub}</div>
+        <div class="n-more">Details &rarr;</div></div></div>`;
+    pipe.appendChild(col);
+    if(i<LAYERS.length-1){const a=document.createElement("div");a.className="flowarrow";a.innerHTML="&#8594;";pipe.appendChild(a);}
+  });
+  pipe.querySelectorAll(".node").forEach(n=>n.onclick=()=>openDrawer(n.dataset.layer,n.dataset.opt));
+  // bypass note for direct-billing MCP
+  const bn=$("#bypassNote");
+  bn.innerHTML=bypass?`<div class="bypass-note"><b>&#9888; Bypass:</b>&nbsp;A direct-billing MCP server grounds on the provider's or vendor's own cost APIs, so it does <b>not</b> use your ingestion, cleaning, metric, or semantic layers (dimmed above). Those choices only matter if you also build dashboards or a grounded copilot alongside it.</div>`:"";
+  // OSI ribbon
+  const rb=$("#osiRibbon");
+  rb.innerHTML=selection.osi?`<div class="osi-ribbon"><b>OSI interchange</b> &mdash; metric definitions kept portable across authoring, the semantic engine, and every consumer. Cross-cutting, not a pipeline stage. <a href="#" data-osi="1" style="margin-left:auto">details</a></div>`:"";
+  const link=rb.querySelector('[data-osi]');
+  if(link)link.onclick=(e)=>{e.preventDefault();openDrawer("interchange","osi");};
+}
+
+function renderLibrary(){
+  const lib=$("#library");lib.innerHTML="";
+  const sections=[...LAYERS,XCUT];
+  sections.forEach(L=>{
+    const isX=L.id==="interchange";
+    const sec=document.createElement("section");sec.className="lib-section";sec.id="lib-"+L.id;
+    let cards="";
+    OPTIONS[L.id].forEach(o=>{
+      const sel=isX?selection.osi:selection[L.id]===o.id;
+      const tools=o.primaryTools.slice(0,3).map(t=>`<span class="tag${sel?' sel':''}">${t}</span>`).join("");
+      cards+=`<div class="opt-card${sel?' selected':''}" data-layer="${L.id}" data-opt="${o.id}">
+        <div class="oc-name">${o.name} ${sel?'<span class="oc-sel">&#10003; selected</span>':''}</div>
+        <div class="oc-sub">${o.sub}</div>
+        <div class="oc-meta"><span class="meta-chip">Effort: ${o.effort}</span><span class="meta-chip">Cost: ${o.cost}</span></div>
+        <div class="oc-tags">${tools}</div></div>`;
+    });
+    const numCls=isX?"num xnum":"num";const numTxt=isX?"+":L.num;
+    sec.innerHTML=`<div class="lib-head"><span class="${numCls}">${numTxt}</span><span class="sw" style="background:${L.color}"></span><h3>${L.facet} &mdash; ${L.name}</h3></div>
+      <p class="plain-line"><b>In plain terms:</b> ${L.plain}</p>
+      <p class="lib-desc">${L.desc}</p><div class="opt-grid">${cards}</div>`;
+    lib.appendChild(sec);
+  });
+  lib.querySelectorAll(".opt-card").forEach(c=>c.onclick=()=>openDrawer(c.dataset.layer,c.dataset.opt));
+}
+
+function openDrawer(layerId,optId){
+  const L=facetMeta(layerId);const o=optById(layerId,optId);if(!o)return;
+  const isX=layerId==="interchange";
+  const isBuy=layerId==="buy";
+  const isSel=isBuy?false:(isX?selection.osi:selection[layerId]===o.id);
+  const eyebrow=isBuy?'Alternative':(isX?'Cross-cutting':'Aspect '+L.num);
+  $("#dEyebrow").innerHTML=`<span class="sw" style="background:${L.color}"></span>${eyebrow} &middot; ${L.facet}`;
+  $("#dTitle").textContent=o.name;
+  $("#dMeta").innerHTML=`<span class="meta-chip">Effort: ${o.effort}</span><span class="meta-chip">Relative cost: ${o.cost}</span>`;
+  const tools=o.primaryTools.map(t=>`<span class="tool-chip">${t}</span>`).join("");
+  const pros=o.pros.map(x=>`<li>${x}</li>`).join("");
+  const cons=o.cons.map(x=>`<li>${x}</li>`).join("");
+  const when=o.when.map(x=>`<li>${x}</li>`).join("");
+  const btnLabel=isX?(isSel?'&#10003; OSI enabled':'Enable OSI interchange'):(isSel?'&#10003; Selected for '+L.facet:'Use this for '+L.facet);
+  const topCtl=isBuy?`<div class="focus-note" style="border-left-color:var(--dark);background:#eef1f4"><p>This is an alternative to building the stack, not a step in the composer, so there's nothing to select here. Use it to weigh buying against the build patterns.</p></div>`:`<button class="d-select-btn ${isSel?'is-sel':''}" id="dSelect">${btnLabel}</button>`;
+  $("#dBody").innerHTML=`
+    ${topCtl}
+    <p class="d-lead" style="margin-top:18px">${o.lead}</p>
+    <div class="d-block"><h4>What it is</h4><p>${o.what}</p></div>
+    <div class="d-block"><h4>Choose it when</h4><ul>${when}</ul></div>
+    <div class="d-block"><h4>Tradeoffs</h4><div class="pros-cons">
+      <div class="pc-box good"><h5>Strengths</h5><ul>${pros}</ul></div>
+      <div class="pc-box bad"><h5>Watch-outs</h5><ul>${cons}</ul></div></div></div>
+    <div class="d-block"><h4>Example tools</h4><div class="tool-row">${tools}</div></div>
+    <div class="d-block"><h4>FOCUS notes</h4><div class="focus-note"><p>${o.focus}</p></div></div>`;
+  const btn=$("#dSelect");
+  if(btn)btn.onclick=()=>{
+    if(isX){selection.osi=!selection.osi;closeDrawer();renderAll();}
+    else if(!isSel){selection[layerId]=optId;closeDrawer();renderAll();}
+  };
+  $("#drawer").classList.add("open");$("#scrim").classList.add("open");$("#dBody").scrollTop=0;
+}
+function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
+$("#dClose").onclick=closeDrawer;$("#scrim").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
+$("#resetBtn").onclick=()=>{selection={...PATTERNS[1].sel};renderAll();};
+
+function renderAll(){renderPatternList();renderFacets();renderVerdict();renderPipe();renderLibrary();}
+renderAll();
+</script>
+<script src="../assets/value-chain.js"></script>
+<script>
+(function(){
+  var burger=document.querySelector('header.site .burger');
+  var nav=document.getElementById('leftnav');
+  var scrim=document.querySelector('.site-scrim');
+  if(!burger||!nav)return;
+  function closeNav(){nav.classList.remove('open');if(scrim)scrim.classList.remove('show');}
+  burger.addEventListener('click',function(){nav.classList.toggle('open');if(scrim)scrim.classList.toggle('show');});
+  if(scrim)scrim.addEventListener('click',closeNav);
+  nav.addEventListener('click',function(e){if(e.target.tagName==='A')closeNav();});
+})();
+</script>
+<aside class="unofficial-footer">
+  <p>Written by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is an unofficial community project. It is not a FOCUS or FinOps Foundation deliverable.</p>
+  <p>Licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Product names and marks belong to their owners.</p>
+  <p>The FinOps Open Cost and Usage Specification is published at <a href="https://focus.finops.org">https://focus.finops.org</a>.</p>
+  <p>Found something wrong? Open an issue or pull request in this repository. Corrections are welcome via issues and pull requests.</p>
+</aside>
+
+</body>
+</html>

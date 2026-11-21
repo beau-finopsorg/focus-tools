@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question or share an idea (Discussions)
+    url: https://github.com/beau-finopsorg/focus-tools/discussions
+    about: Questions and ideas about these community tools.
+  - name: Feedback on the specification itself
+    url: https://focus.finops.org/feedback/
+    about: This repo holds unofficial community tools. For feedback on the FOCUS specification, use the official project feedback page.

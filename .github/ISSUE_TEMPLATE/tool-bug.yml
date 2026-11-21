@@ -1,0 +1,37 @@
+name: Tool bug
+description: Something in a tool here does not work as expected.
+title: "[Bug] "
+labels: ["tool-bug"]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool name
+      description: For example, a schema map page or a script.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Tool version or commit
+    validations:
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: Browser or runtime
+      description: Browser and version, or the runtime and version.
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to repeat
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true

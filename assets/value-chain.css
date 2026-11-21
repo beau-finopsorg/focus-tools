@@ -1,0 +1,79 @@
+/* ============================================================
+   FOCUS Value Chain: shared, reusable diagram
+   Markup: <figure class="focus-vc" data-focus-value-chain
+             data-variant="full|compact" data-tone="light|dark"></figure>
+   assets/value-chain.js fills it. Self-contained colors so it
+   works on any page regardless of that page's :root variables.
+   ============================================================ */
+.focus-vc{
+  --vc-purple:#bd3bfd; --vc-purple-dk:#9b2fd6; --vc-purple-tint:#f3e8ff;
+  --vc-ink:rgba(0,0,0,.92); --vc-ink-2:rgba(0,0,0,.72); --vc-ink-3:rgba(0,0,0,.56);
+  --vc-line:rgba(0,0,0,.12); --vc-card:#fff; --vc-panel:#f9fafa;
+  --vc-shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  margin:0; font-family:"IBM Plex Sans",sans-serif; color:var(--vc-ink);
+}
+.focus-vc[data-tone="dark"]{
+  --vc-ink:#fff; --vc-ink-2:rgba(255,255,255,.8); --vc-ink-3:rgba(255,255,255,.62);
+  --vc-line:rgba(255,255,255,.18); --vc-card:rgba(255,255,255,.06); --vc-panel:rgba(255,255,255,.04);
+  --vc-shadow:none; --vc-purple-tint:rgba(189,59,253,.18);
+}
+.focus-vc *{box-sizing:border-box}
+.focus-vc .vc-head{margin:0 0 12px}
+.focus-vc .vc-title{margin:0; font-size:1.05rem; font-weight:700; line-height:1.25; color:var(--vc-ink)}
+.focus-vc .vc-sub{margin:2px 0 0; font-size:.88rem; color:var(--vc-ink-3)}
+.focus-vc ol{list-style:none; margin:0; padding:0; display:grid; gap:0; counter-reset:vc}
+.focus-vc li{position:relative; counter-increment:vc}
+
+/* ---- full: six cards with arrows ---- */
+.focus-vc[data-variant="full"]{background:var(--vc-panel); border:1px solid var(--vc-line); border-radius:10px; padding:16px 16px 14px}
+.focus-vc[data-variant="full"] ol{grid-template-columns:repeat(6,minmax(0,1fr)); column-gap:18px}
+.focus-vc[data-variant="full"] li{background:var(--vc-card); border:1px solid var(--vc-line); border-radius:8px; padding:10px 10px 12px; box-shadow:var(--vc-shadow)}
+.focus-vc[data-variant="full"] li:not(:last-child)::after{
+  content:""; position:absolute; top:50%; right:-14px; width:10px; height:10px;
+  border-top:2px solid var(--vc-purple); border-right:2px solid var(--vc-purple);
+  transform:translateY(-50%) rotate(45deg);
+}
+.focus-vc .vc-kicker{display:block; font-family:"IBM Plex Mono",monospace; font-size:.66rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--vc-ink-3)}
+.focus-vc .vc-kicker::before{content:counter(vc) " · "}
+.focus-vc .vc-name{display:block; margin:3px 0 4px; font-size:.95rem; font-weight:700; line-height:1.2}
+.focus-vc .vc-desc{display:block; font-size:.8rem; line-height:1.45; color:var(--vc-ink-2)}
+.focus-vc .vc-desc code{font-family:"IBM Plex Mono",monospace; font-size:.74rem}
+.focus-vc li.vc-focus{border-color:var(--vc-purple); background:var(--vc-purple-tint)}
+.focus-vc li.vc-focus .vc-name{color:var(--vc-purple-dk)}
+.focus-vc[data-tone="dark"] li.vc-focus .vc-name{color:#fff}
+.focus-vc .vc-note{margin:12px 0 0; font-size:.8rem; color:var(--vc-ink-3)}
+.focus-vc .vc-note b{color:var(--vc-ink-2)}
+
+/* ---- compact: chevron strip ---- */
+.focus-vc[data-variant="compact"] ol{grid-template-columns:repeat(6,auto); justify-content:start; column-gap:0}
+.focus-vc[data-variant="compact"] li{
+  padding:7px 14px 7px 20px; margin-right:-6px; font-size:.82rem; font-weight:600; white-space:nowrap;
+  color:var(--vc-ink); background:var(--vc-card); border:1px solid var(--vc-line);
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%,10px 50%);
+}
+.focus-vc[data-variant="compact"] li:first-child{padding-left:14px; clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%)}
+.focus-vc[data-variant="compact"] li.vc-focus{background:var(--vc-purple); border-color:var(--vc-purple); color:#fff}
+.focus-vc[data-variant="compact"] .vc-kicker,.focus-vc[data-variant="compact"] .vc-desc{display:none}
+.focus-vc[data-variant="compact"] .vc-name{margin:0; font-size:inherit; font-weight:inherit}
+.focus-vc[data-variant="compact"] .vc-head{margin-bottom:8px}
+.focus-vc[data-variant="compact"] .vc-title{font-size:.72rem; font-family:"IBM Plex Mono",monospace; letter-spacing:.05em; text-transform:uppercase; color:var(--vc-ink-3); font-weight:600}
+.focus-vc[data-variant="compact"] .vc-sub{display:none}
+.focus-vc[data-variant="compact"] .vc-note{margin-top:8px; font-size:.78rem}
+
+/* ---- responsive ---- */
+@media (max-width:1100px){
+  .focus-vc[data-variant="full"] ol{grid-template-columns:repeat(3,minmax(0,1fr)); row-gap:14px}
+  .focus-vc[data-variant="full"] li:nth-child(3)::after{display:none}
+}
+@media (max-width:640px){
+  .focus-vc[data-variant="full"] ol{grid-template-columns:1fr; row-gap:16px}
+  .focus-vc[data-variant="full"] li:not(:last-child)::after{display:block; top:auto; bottom:-13px; right:auto; left:50%; transform:translateX(-50%) rotate(135deg)}
+  .focus-vc[data-variant="compact"] ol{grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:6px}
+  .focus-vc[data-variant="compact"] li,.focus-vc[data-variant="compact"] li:first-child{white-space:normal; margin-right:0; padding:7px 12px; border-radius:6px; clip-path:none}
+  .focus-vc[data-variant="compact"] li::before{content:counter(vc) ". "; opacity:.7}
+}
+@media print{ .focus-vc[data-variant="full"] li{box-shadow:none} }
+.focus-vc .vc-caption{display:block; margin-top:8px; font-size:.8rem; color:var(--vc-ink-3)}
+.focus-vc .vc-caption a{color:var(--vc-purple)}
+.focus-vc[data-variant="compact"] li.vc-focus .vc-name{color:#fff}
+@media (max-width:640px){ .focus-vc[data-variant="compact"] .vc-name{display:inline} }
