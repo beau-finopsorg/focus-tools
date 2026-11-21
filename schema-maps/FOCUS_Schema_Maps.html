@@ -3,9 +3,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FOCUS Schema Maps &mdash; v1.0 to v1.5</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 .unofficial-banner{
-  margin: 1rem 0 1.5rem;
+  margin: 0;
   padding: .9rem 1.1rem;
   background: #fff8e8;
   border: 1px solid #e6d19a;
@@ -15,9 +16,10 @@
   line-height: 1.45;
 }
 .unofficial-banner p{margin:0;}
+.unofficial-footer{font-size:12px;color:var(--ink3);line-height:1.5;padding:0 4px}
+.unofficial-footer a{color:#bd3bfd}
 .site-header,.burger,nav.drawer,.has-drawer .drawer{display:none !important;}
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--ink:rgba(0,0,0,.92);--ink2:rgba(0,0,0,.62);--ink3:rgba(0,0,0,.45);--dark:#2B3F50;--line:rgba(0,0,0,.10)}
 html{font-family:"IBM Plex Sans",sans-serif;color:var(--ink);background:#eef0f2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -85,6 +87,7 @@ header.site-header .hcommit{position:absolute;top:10px;right:18px;margin-left:0}
 .vjump{display:inline-flex;gap:4px;margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)}
 .vjump a{color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px}
 .vjump a:hover{background:rgba(255,255,255,.14)}
+@media (max-width:700px){.vjump{margin-left:0;padding-left:0;border-left:0}}
 .cmplink{margin-left:auto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:5px 14px;font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap}
 .cmplink:hover{border-color:#fff}
 .legend{font-size:11.5px;color:var(--ink2);margin:-12px 4px 0;line-height:1.45}
@@ -117,6 +120,22 @@ header.site-header .hcommit{position:absolute;top:10px;right:18px;margin-left:0}
 /* new/changed/deprecated/mandatory are painted by script: one stripe per active
    flag, stacked left to right, so a column that is e.g. changed AND mandatory
    shows both colors */
+/* side panel: spec compare for the clicked column, embedded */
+#dpanel{position:fixed;top:0;right:0;bottom:0;width:min(680px,100vw);background:#fff;z-index:95;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18)}
+#dpanel[hidden]{display:none}
+#dpanel .dph{background:var(--dark);color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:flex-start}
+#dpanel .dpname{font-weight:700;font-size:16px;line-height:1.25}
+#dpanel .dpsub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+#dpanel .dpx{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;font-size:18px;line-height:1;padding:4px 10px;cursor:pointer}
+#dpanel .dpx:hover{border-color:#fff}
+#dpanel .dplinks{display:flex;gap:16px;flex-wrap:wrap;padding:8px 16px;font-size:12.5px;border-bottom:1px solid var(--line);background:#f9fafa}
+#dpanel .dplinks a{color:#bd3bfd;font-weight:600;text-decoration:none}
+#dpanel iframe{flex:1;border:0;width:100%}
+#dpanel .dpmsg{padding:16px;font-size:13px;line-height:1.5;color:var(--ink2);overflow:auto}
+#dpanel .dpmsg p{margin:0 0 10px}
+#dpanel .dpmsg b{color:var(--ink)}
+@media (min-width:1300px){body.dp-open{margin-right:680px}}
+.col.sel{outline:2px solid #bd3bfd;outline-offset:-2px}
 .col.flash{outline:3px solid #bd3bfd;outline-offset:-1px;transition:outline-color 1.2s}
 body.hl-rel .col.keycol{background:#f6ecff}
 .kbadge{display:none;font-size:8.5px;font-weight:700;font-family:"IBM Plex Mono",monospace;border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:middle}
@@ -149,7 +168,7 @@ body.hl-rel .relnote{display:block}
   body{padding:0;gap:0;display:block}
   .page{display:block;overflow:visible}
   .sheet{box-shadow:none;border-radius:0}
-  .toolbar,.legend,.changes{display:none!important}
+  .toolbar,.legend,.changes,#dpanel{display:none!important}
   .relnote{display:none!important}
   .relsvg{display:none!important}
   .kbadge{display:none!important}
@@ -469,6 +488,8 @@ body.hl-rel .relnote{display:block}
    });
    d.innerHTML=h+'</div>';
    d.addEventListener('click',function(e){
+     var df=e.target.closest('.diff');
+     if(df&&!(e.metaKey||e.ctrlKey||e.shiftKey)){e.preventDefault();var li=df.closest('li').querySelector('.go');openPanel(grp[li.getAttribute('data-k')][+li.getAttribute('data-j')].el);return;}
      var b=e.target.closest('.go');if(!b)return;
      var a=grp[b.getAttribute('data-k')][+b.getAttribute('data-j')].el;
      a.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
@@ -510,6 +531,51 @@ body.hl-rel .relnote{display:block}
  }
  window.addEventListener('resize',function(){if(document.body.classList.contains('hl-rel'))draw();});
 
+ // ---- side panel: diff of the clicked column against the previous version ----
+ var PREV={'1.0':'0.5','1.1':'1.0','1.2':'1.1','1.3':'1.2','1.4':'1.3','1.5':'1.4'};
+ var ONSITE=['0.5'].concat(PUBLISHED);
+ var dp=document.createElement('aside');dp.id='dpanel';dp.hidden=true;dp.setAttribute('aria-label','Column changes');
+ dp.innerHTML='<div class="dph"><div><div class="dpname"></div><div class="dpsub"></div></div><button class="dpx" aria-label="Close panel">&times;</button></div>'
+   +'<div class="dplinks"></div><iframe title="Spec compare" hidden></iframe><div class="dpmsg" hidden></div>';
+ document.body.appendChild(dp);
+ var frame=dp.querySelector('iframe'),selCol=null;
+ function closePanel(){dp.hidden=true;document.body.classList.remove('dp-open');if(selCol)selCol.classList.remove('sel');selCol=null;}
+ dp.querySelector('.dpx').addEventListener('click',closePanel);
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dp.hidden)closePanel();});
+ function openPanel(a){
+   var v=a.closest('.page').id.replace(/^v/,''),prev=PREV[v],ds=a.closest('.dscont').getAttribute('data-ds');
+   var name=a.getAttribute('data-name'),ok=ONSITE.indexOf(v)>=0&&ONSITE.indexOf(prev)>=0;
+   if(selCol)selCol.classList.remove('sel');selCol=a;a.classList.add('sel');
+   dp.querySelector('.dpname').textContent=name;
+   dp.querySelector('.dpsub').textContent=ds+' · FOCUS '+prev+' → '+v;
+   var hash='from='+vslug(prev)+'&to='+vslug(v)+'&sec='+encodeURIComponent(slug(ds)+'/'+slug(name));
+   dp.querySelector('.dplinks').innerHTML='<a href="'+esc(a.href)+'" target="_blank" rel="noopener">Open in specification ↗</a>'
+     +(ok?'<a href="'+CMP+'#'+hash+'" target="_blank" rel="noopener">Open full compare ↗</a>':'');
+   var msg=dp.querySelector('.dpmsg');
+   if(ok){
+     msg.hidden=true;frame.hidden=false;
+     var src=new URL(CMP+'#'+hash+'&embed=1',location.href).href;
+     // Same page, new hash: spec compare listens for hashchange and keeps its cache.
+     // location.replace (not location.hash) is allowed when the frame counts as
+     // cross-origin, as it does for pages opened from file://.
+     if(!frame.getAttribute('src'))frame.setAttribute('src',src);
+     else try{frame.contentWindow.location.replace(src);}catch(e){frame.setAttribute('src',src);}
+   }else{
+     frame.hidden=true;msg.hidden=false;
+     var flag=a.getAttribute('data-flag');
+     msg.innerHTML='<p><b>No text diff for FOCUS '+esc(v)+'.</b> It is a candidate release on GitHub and is not yet published on focus.finops.org, which spec compare reads from.</p>'
+       +(flag?'<p><b>'+esc(flag)+'</b></p>':'<p>Not flagged as new or changed in '+esc(v)+'.</p>')
+       +'<p>'+esc(a.getAttribute('data-desc')||'')+'</p>';
+   }
+   dp.hidden=false;document.body.classList.add('dp-open');
+   if(document.body.classList.contains('hl-rel'))requestAnimationFrame(draw);
+ }
+ document.addEventListener('click',function(e){
+   var a=e.target.closest&&e.target.closest('.col');
+   if(!a||e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;
+   e.preventDefault();tip.style.display='none';openPanel(a);
+ });
+
  // ---- hover popup (column definition flyout) ----
  var DSC={'Cost and Usage':'#bd3bfd','Contract Commitment':'#e8920c','Invoice Detail':'#e03131','Billing Period':'#3b5bdb','SKU Price':'#0c8599'};
  var tip=document.createElement('div');tip.id='coltip';document.body.appendChild(tip);
@@ -531,7 +597,7 @@ body.hl-rel .relnote{display:block}
      +'<div class="ttdesc">'+esc(a.getAttribute('data-desc')||'')+'</div>'
      +(shared?'<div class="ttmeta">Shared across datasets — shown in each, counted once.</div>':'')
      +'<div class="ttmeta">'+esc(a.getAttribute('data-ver')||'')+'</div>'
-     +'<div class="ttlink">Click to open the full definition in the FOCUS specification ↗</div>'
+     +'<div class="ttlink">Click to see what changed in this column · ⌘/Ctrl-click opens the specification ↗</div>'
      +'</div>';
  }
  function place(e){

@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+/* Embed mode (#...&embed=1): the schema maps show this page in a side panel. */
+if(/(^#|&)embed=1(&|$)/.test(location.hash)) document.documentElement.classList.add("embed");
+</script>
 <style>
 :root{
   /* FOCUS brand tokens */
@@ -186,6 +190,19 @@ footer.site p{margin:0 0 6px}
 .back{margin:.25rem 0 0;font-size:.88rem}
 .back a{color:var(--purple);text-decoration:none}
 
+/* ---------- embed mode (schema maps side panel) ---------- */
+html.embed .unofficial-banner,html.embed .back,html.embed .doc-head,html.embed footer.site{display:none}
+html.embed .controls{padding:10px 0}
+html.embed .ctlgrid{gap:8px 10px}
+html.embed .field{flex:0 0 auto}
+html.embed .field:has(#fromV),html.embed .field:has(#toV){flex:1 1 0}
+html.embed .field select{min-width:0;width:100%}
+html.embed .sectionpicker{flex:1 1 100%}
+html.embed .field:has(.seg) label{display:none}
+html.embed .chk{padding-bottom:0;align-self:center}
+html.embed main{padding-top:0}
+html.embed .app-main{padding-top:14px}
+
 /* ---------- docs shell integration ---------- */
 .site-content.full .wrap{max-width:1440px; padding:0 24px;}
 .doc-head{padding:26px 0 0;}
@@ -288,6 +305,9 @@ const FALLBACK_VERSIONS = [
   {id:5765,  slug:"v0-5"}, {id:5778,  slug:"v1-0"}, {id:5872,  slug:"v1-1"},
   {id:18295, slug:"v1-2"}, {id:18676, slug:"v1-3"}, {id:19202, slug:"v1-4"}
 ];
+
+const EMBED = document.documentElement.classList.contains("embed");
+if(EMBED){ const b = document.createElement("base"); b.target = "_blank"; document.head.appendChild(b); }
 
 const state = {
   versions: [],          // [{id, slug, label, num}]
@@ -651,8 +671,13 @@ function renderPicker(){
     // Partial keys (e.g. "cost-and-usage/billed-cost" from the schema maps) match
     // the full key that ends with them, then fall back to the last segment.
     const opts = [...sel.options].map(o => o.value).filter(Boolean);
-    const last = "/" + state.sec.split("/").pop();
-    const hit = opts.find(k => k.endsWith("/" + state.sec)) || opts.find(k => k.endsWith(last));
+    // Older versions slug headings without dashes ("billedcost"), so compare loosely.
+    const last = state.sec.split("/").pop().replace(/-/g, "");
+    const hit = opts.find(k => k.endsWith("/" + state.sec)) ||
+                opts.find(k => k.split("/").pop().replace(/-/g, "") === last) ||
+                // Before v1.3 a column is an H3 split into H4 subsections; open its Description.
+                (c => c.find(k => k.endsWith("/description")) || c[0])(
+                  opts.filter(k => k.split("/").slice(0, -1).some(seg => seg.replace(/-/g, "") === last)));
     if(hit) state.sec = hit;
   }
   if(state.sec && sel.querySelector('option[value="' + cssEsc(state.sec) + '"]')) sel.value = state.sec;
@@ -716,7 +741,7 @@ function render(){
   $("#summary").innerHTML = ""; $("#summary").appendChild(sum);
   sum.querySelector("#copylink").addEventListener("click", ev => {
     ev.preventDefault();
-    navigator.clipboard.writeText(location.href).then(() => {
+    navigator.clipboard.writeText(location.href.replace(/&embed=1/, "")).then(() => {
       ev.target.textContent = "Link copied ✓";
       setTimeout(() => { ev.target.textContent = "Copy link to this comparison"; }, 1800);
     }).catch(()=>{});
@@ -896,7 +921,8 @@ function writeHash(){
   const p = new URLSearchParams();
   p.set("from", state.from.slug); p.set("to", state.to.slug);
   if(state.sec) p.set("sec", state.sec);
-  if(state.view !== "split") p.set("view", state.view);
+  if(state.view !== "split" || EMBED) p.set("view", state.view);
+  if(EMBED) p.set("embed", "1");
   history.replaceState(null, "", "#" + p.toString());
 }
 
@@ -937,7 +963,7 @@ async function init(){
   state.from = byslug(h.from) || prev;
   state.to   = byslug(h.to)   || last;
   state.sec  = h.sec || "datasets/cost-and-usage/billed-cost";
-  state.view = h.view === "unified" ? "unified" : "split";
+  state.view = h.view ? (h.view === "unified" ? "unified" : "split") : (EMBED ? "unified" : "split");
 
   const fill = (sel, cur) => {
     sel.innerHTML = "";
@@ -966,6 +992,15 @@ async function init(){
     $("#vUni").setAttribute("aria-pressed", String(v === "unified"));
     safeRender(); writeHash();
   }
+  // The schema maps panel retargets this page by changing the hash.
+  window.addEventListener("hashchange", () => {
+    const n = readHash();
+    if(byslug(n.from)) state.from = byslug(n.from);
+    if(byslug(n.to)) state.to = byslug(n.to);
+    if(n.sec) state.sec = n.sec;
+    $("#fromV").value = state.from.slug; $("#toV").value = state.to.slug;
+    reload();
+  });
 
   reload();
 }
