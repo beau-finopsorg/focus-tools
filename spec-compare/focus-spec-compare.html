@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCUSed Spec Compare</title>
+<meta name="description" content="Compare any section of the FinOps Open Cost and Usage Specification (FOCUS) across published versions, with word-level diffs and a structured constraints delta.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* FOCUS brand tokens */
+  --purple:#bd3bfd;
+  --purple-tint:#f3e8ff;
+  --green:#1fa382;
+  --green-ring:#009e76;
+  --dark:#2B3F50;
+  --text:rgba(0,0,0,.92);
+  --text-2:rgba(0,0,0,.72);
+  --text-muted:rgba(0,0,0,.56);
+  --bd-1:rgba(0,0,0,.08);
+  --bd-2:rgba(0,0,0,.12);
+  --bd-3:rgba(0,0,0,.24);
+  --bg:#fff;
+  --bg-tint:rgba(0,0,0,.02);
+  --panel:#f9fafa;
+  --th:#f5f5f5;
+  --td-bd:#e0e0e0;
+  --row-alt:#f9f9f9;
+  /* diff functional colors */
+  --add-bg:#e6f6f1;      /* tint of FOCUS green */
+  --add-bd:#1fa382;
+  --del-bg:#fdecea;      /* functional red, see note in README */
+  --del-bd:#b3261e;
+  --del-text:#b3261e;
+  --shadow:0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:1rem;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+.site-content a{color:var(--purple);text-decoration:none}
+.site-content a:hover{text-decoration:underline}
+code,.mono{font-family:"IBM Plex Mono","Source Code Pro",ui-monospace,monospace}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1440px;margin:0 auto;padding:0 24px}
+.brandmark{display:flex;align-items:baseline;gap:10px}
+.brandmark .f{font-weight:700;font-size:1.25rem;letter-spacing:.02em}
+.brandmark .tm{font-size:.6rem;vertical-align:super;opacity:.8}
+.brandmark .sep{opacity:.35}
+.brandmark .t{font-weight:500;font-size:1.05rem;opacity:.95}
+
+/* ---------- controls ---------- */
+.controls{background:var(--bg-tint);border-bottom:1px solid var(--bd-1);padding:16px 0}
+.ctlgrid{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+select,input[type=search],button{
+  font-family:inherit;font-size:.9rem;color:var(--text);
+  border:1px solid var(--bd-2);border-radius:8px;background:#fff;padding:9px 11px;
+}
+select{min-width:120px;cursor:pointer}
+input[type=search]{min-width:280px}
+select:focus,input:focus,button:focus{outline:2px solid var(--green-ring);outline-offset:1px}
+.btn{cursor:pointer;font-weight:500;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{border-color:var(--bd-3);background:var(--bg-tint)}
+.btn.icon{padding:9px 12px;font-size:1rem;line-height:1}
+.seg{display:inline-flex;border:1px solid var(--bd-2);border-radius:8px;overflow:hidden;background:#fff}
+.seg button{border:0;border-radius:0;padding:9px 14px;background:#fff;cursor:pointer;font-size:.85rem;font-weight:500}
+.seg button+button{border-left:1px solid var(--bd-2)}
+.seg button[aria-pressed=true]{background:var(--purple-tint);color:var(--purple);font-weight:600}
+.chk{display:flex;align-items:center;gap:7px;font-size:.85rem;color:var(--text-2);padding-bottom:9px;cursor:pointer;white-space:nowrap}
+.chk input{accent-color:var(--purple);width:15px;height:15px;cursor:pointer}
+.sectionpicker{flex:1 1 340px;min-width:260px}
+.sectionpicker select{width:100%}
+
+/* ---------- status / summary ---------- */
+main{padding:24px 0 64px}
+.badge{display:inline-block;border-radius:999px;padding:3px 11px;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.b-mod{background:var(--purple-tint);color:#7a1fb0}
+.b-add{background:var(--add-bg);color:#0f6b56}
+.b-del{background:var(--del-bg);color:var(--del-text)}
+.b-same{background:rgba(0,0,0,.06);color:var(--text-muted)}
+.b-moved{background:#fff4e0;color:#8a5a00}
+
+.summary{border:1px solid var(--bd-1);border-radius:8px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:22px;background:#fff}
+.summary h1{margin:0 0 4px;font-size:1.5rem;font-weight:700;line-height:1.25}
+.summary .sub{color:var(--text-muted);font-size:.85rem;margin-bottom:14px}
+.summary .sub .mono{font-size:.8rem}
+.statrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.stat{font-size:.82rem;color:var(--text-2)}
+.stat b{color:var(--text)}
+.plus{color:#0f6b56;font-weight:600}
+.minus{color:var(--del-text);font-weight:600}
+.permalinks{margin-top:14px;padding-top:13px;border-top:1px solid var(--bd-1);font-size:.83rem;display:flex;gap:18px;flex-wrap:wrap}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:26px}
+.card{border:1px solid var(--bd-1);border-radius:8px;box-shadow:var(--shadow);background:#fff;overflow:hidden}
+.card h2{margin:0;padding:13px 18px;font-size:.78rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-2);background:var(--panel);border-bottom:1px solid var(--bd-1)}
+.card .body{padding:14px 18px}
+.card .body.tight{padding:0}
+table.kv{width:100%;border-collapse:collapse;font-size:.87rem}
+table.kv th,table.kv td{text-align:left;padding:9px 18px;border-bottom:1px solid var(--td-bd);vertical-align:top}
+table.kv thead th{background:var(--th);font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);font-weight:600}
+table.kv tr:last-child td{border-bottom:0}
+table.kv td.k{font-weight:500;width:34%}
+tr.r-add td{background:var(--add-bg)}
+tr.r-del td{background:var(--del-bg)}
+tr.r-mod td{background:var(--purple-tint)}
+td .old{color:var(--del-text);text-decoration:line-through;opacity:.85}
+td .arrow{color:var(--text-muted);padding:0 5px}
+td .new{color:#0f6b56;font-weight:600}
+ul.deltalist{list-style:none;margin:0;padding:0;font-size:.87rem}
+ul.deltalist li{padding:7px 0;border-bottom:1px solid var(--bd-1);display:flex;gap:9px;align-items:flex-start}
+ul.deltalist li:last-child{border-bottom:0}
+ul.deltalist .sym{font-weight:700;flex:0 0 auto;width:14px;text-align:center}
+ul.deltalist .sym.a{color:#0f6b56}
+ul.deltalist .sym.d{color:var(--del-text)}
+ul.deltalist .sym.m{color:var(--purple)}
+.nochange{color:var(--text-muted);font-size:.87rem;font-style:italic}
+
+/* ---------- diff ---------- */
+.diffwrap{border:1px solid var(--bd-1);border-radius:8px;box-shadow:var(--shadow);background:#fff;overflow:hidden}
+.diffhead{display:grid;grid-template-columns:1fr 1fr;background:var(--panel);border-bottom:1px solid var(--bd-1);font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.diffhead div{padding:11px 18px}
+.diffhead div+div{border-left:1px solid var(--bd-1)}
+.diffhead.uni{grid-template-columns:1fr}
+.rows{font-size:.92rem}
+.row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--bd-1)}
+.row:last-child{border-bottom:0}
+.row.uni{grid-template-columns:1fr}
+.cell{padding:9px 18px;min-width:0;overflow-wrap:anywhere}
+.cell+.cell{border-left:1px solid var(--bd-1)}
+.cell.empty{background:repeating-linear-gradient(135deg,transparent,transparent 6px,rgba(0,0,0,.025) 6px,rgba(0,0,0,.025) 12px)}
+.cell.del{background:var(--del-bg);box-shadow:inset 3px 0 0 var(--del-bd)}
+.cell.add{background:var(--add-bg);box-shadow:inset 3px 0 0 var(--add-bd)}
+.cell.mod{background:#fff}
+.row.mod .cell:first-child{box-shadow:inset 3px 0 0 var(--purple)}
+.row.mod .cell:last-child{box-shadow:inset 3px 0 0 var(--purple)}
+.row.hidden{display:none}
+ins{background:#c9ecdf;color:#0b503f;text-decoration:none;border-radius:3px;padding:0 2px;font-weight:600}
+del{background:#fbd9d5;color:var(--del-text);border-radius:3px;padding:0 2px}
+.blk-h5,.blk-h6{font-weight:600}
+.blk-h5{font-size:.95rem}
+.blk-h6{font-size:.9rem;color:var(--text-2)}
+.blk-li{padding-left:20px;position:relative}
+.blk-li:before{content:"•";position:absolute;left:6px;color:var(--text-muted)}
+.blk-tr{font-family:"IBM Plex Mono",monospace;font-size:.83rem}
+.blk-pre{font-family:"IBM Plex Mono",monospace;font-size:.83rem;white-space:pre-wrap;background:var(--panel);border-radius:6px;padding:8px 10px}
+.marker{display:inline-block;width:16px;color:var(--text-muted);font-weight:700;user-select:none}
+.marker.a{color:#0f6b56}.marker.d{color:var(--del-text)}
+
+/* ---------- misc ---------- */
+.notice{border:1px solid var(--bd-2);background:var(--panel);border-radius:8px;padding:14px 18px;font-size:.88rem;color:var(--text-2);margin-bottom:20px}
+.notice b{color:var(--text)}
+.loading{padding:60px 0;text-align:center;color:var(--text-muted)}
+.spinner{width:26px;height:26px;border:3px solid var(--bd-2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{border-left:3px solid var(--del-bd);background:var(--del-bg);padding:14px 18px;border-radius:8px;font-size:.9rem}
+footer.site{border-top:1px solid var(--bd-1);background:var(--bg-tint);padding:26px 0;font-size:.8rem;color:var(--text-muted)}
+footer.site p{margin:0 0 6px}
+.hidden{display:none !important}
+
+@media (max-width:1023px){
+  .wrap{padding:0 16px}
+  .cards{grid-template-columns:1fr}
+  }
+@media (max-width:767px){
+  html{font-size:12px}
+  .row,.diffhead{grid-template-columns:1fr}
+  .cell+.cell{border-left:0;border-top:1px solid var(--bd-1)}
+  .diffhead div+div{border-left:0;border-top:1px solid var(--bd-1)}
+  input[type=search]{min-width:0;width:100%}
+  .field{flex:1 1 100%}
+  .sectionpicker{flex-basis:100%}
+}
+
+/* ---------- standalone page ---------- */
+.unofficial-banner{margin:1rem 0 .5rem;padding:.75rem 1rem;background:#fff8e8;border:1px solid #e6d19a;border-radius:6px;color:#3a2a00;font-size:.92rem;line-height:1.45}
+.unofficial-banner p{margin:0}
+.back{margin:.25rem 0 0;font-size:.88rem}
+.back a{color:var(--purple);text-decoration:none}
+
+/* ---------- docs shell integration ---------- */
+.site-content.full .wrap{max-width:1440px; padding:0 24px;}
+.doc-head{padding:26px 0 0;}
+.doc-head .doc-eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:#9b2fd6;margin:0 0 6px;}
+.doc-head h1{font-size:1.9rem;font-weight:700;line-height:1.15;margin:0 0 8px;}
+.doc-head .doc-lede{font-size:1.02rem;color:var(--text-muted);margin:0 0 20px;max-width:70ch;}
+footer.site{margin-top:40px;}
+</style>
+</head>
+<body>
+<main class="site-content full">
+<div class="wrap">
+<aside class="unofficial-banner" role="note">
+  <p><strong>Unofficial community project.</strong> Prepared by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is not an official FOCUS, FinOps Foundation, or Linux Foundation publication. The published specification is always authoritative.</p>
+</aside>
+<p class="back"><a href="../index.html">&larr; All FOCUS tools</a> &middot; <a href="../schema-maps/FOCUS_Schema_Maps.html">Schema maps</a></p>
+</div>
+
+
+<div class="doc-head">
+  <div class="wrap">
+    <p class="doc-eyebrow">FOCUS tools <span style="opacity:.45;margin:0 7px;">/</span> Spec Compare</p>
+    <h1>FOCUSed Spec Compare</h1>
+    <p class="doc-lede">See exactly what changed in the FinOps Open Cost and Usage Specification
+    between any two published versions.</p>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="wrap ctlgrid">
+    <div class="field">
+      <label for="fromV">From</label>
+      <select id="fromV"></select>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn icon" id="swap" title="Swap versions" aria-label="Swap versions">⇄</button>
+    </div>
+    <div class="field">
+      <label for="toV">To</label>
+      <select id="toV"></select>
+    </div>
+    <div class="field sectionpicker">
+      <label for="sec">Section</label>
+      <select id="sec"></select>
+    </div>
+    <div class="field">
+      <label>View</label>
+      <div class="seg" role="group" aria-label="Diff view mode">
+        <button id="vSplit" aria-pressed="true">Side&#8209;by&#8209;side</button>
+        <button id="vUni" aria-pressed="false">Unified</button>
+      </div>
+    </div>
+    <label class="chk"><input type="checkbox" id="onlyChanged"> Changed sections only</label>
+    <label class="chk"><input type="checkbox" id="onlyDiffRows"> Hide unchanged lines</label>
+  </div>
+</div>
+
+<div class="wrap app-main">
+  <div id="boot" class="loading"><div class="spinner"></div><div>Loading FOCUS specification versions…</div></div>
+  <div id="app" class="hidden">
+    <div id="summary"></div>
+    <div id="structured" class="cards"></div>
+    <div id="diff"></div>
+  </div>
+  <div id="error" class="hidden"></div>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p>Content is fetched live from the FOCUS WordPress REST API at <span class="mono">focus.finops.org</span>; this page renders a diff and is not itself normative. The published specification is always authoritative.</p>
+    <p>FOCUS™ is a Joint Development Foundation Specification Project, supported by — but not owned or controlled by — the FinOps Foundation, a project of the Linux Foundation. Specification content is licensed <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>.</p>
+    <p>Unofficial community project. Found something wrong? Open an issue or pull request in <a href="https://github.com/beau-finopsorg/focus-tools">the focus-tools repository</a>.</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   FOCUSed Spec Compare
+   -------------------------------------------------------------------------
+   Every published FOCUS spec version is a single WordPress page whose
+   rendered HTML contains the whole specification with stable heading slugs
+   (e.g. "317-billed-cost"). We fetch two of those pages over the public,
+   CORS-open WP REST API, split each into comparable sections keyed by
+   slug path, and diff them client-side. No backend required.
+   ========================================================================= */
+
+const API   = "https://focus.finops.org/wp-json/wp/v2/pages";
+const SPEC_PARENT = 5478;                     // parent page of all spec versions
+const DOCS  = "https://focus.finops.org/docs/specification/";
+const SPECP = "https://focus.finops.org/focus-specification/";
+
+/* Fallback list if parent-based discovery ever fails. */
+const FALLBACK_VERSIONS = [
+  {id:5765,  slug:"v0-5"}, {id:5778,  slug:"v1-0"}, {id:5872,  slug:"v1-1"},
+  {id:18295, slug:"v1-2"}, {id:18676, slug:"v1-3"}, {id:19202, slug:"v1-4"}
+];
+
+const state = {
+  versions: [],          // [{id, slug, label, num}]
+  docs: new Map(),       // slug -> parsed {sections:Map, order:[]}
+  from: null, to: null, sec: null,
+  view: "split",
+  onlyChanged: false,
+  onlyDiffRows: false
+};
+
+/* ------------------------------------------------------------------ utils */
+const $  = s => document.querySelector(s);
+const el = (t,c,txt) => { const n=document.createElement(t); if(c)n.className=c; if(txt!=null)n.textContent=txt; return n; };
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => (s||"").replace(/\u00a0/g," ").replace(/\s+/g," ").trim();
+const stripNum = s => (s||"").replace(/^[0-9]+(?:-|\.)?-?/,"").replace(/^-+/,"");
+const stripHeadNum = s => norm(s).replace(/^\d+(?:\.\d+)*\.?\s*/,"");
+const verLabel = slug => "v" + slug.replace(/^v/,"").replace(/-/g,".");
+const verNum   = slug => { const m=/^v?(\d+)-(\d+)/.exec(slug); return m ? (+m[1])*1000 + (+m[2]) : 0; };
+
+/* --------------------------------------------------------------- fetching */
+async function loadVersions(){
+  let list = [];
+  try{
+    const u = new URL(API);
+    u.searchParams.set("parent", SPEC_PARENT);
+    u.searchParams.set("per_page","100");
+    u.searchParams.set("_fields","id,slug,title");
+    const r = await fetch(u);
+    if(r.ok) list = await r.json();
+  }catch(e){ /* fall through */ }
+
+  if(!Array.isArray(list) || !list.length) list = FALLBACK_VERSIONS;
+
+  return list
+    .filter(p => /^v\d+-\d+$/.test(p.slug))
+    .map(p => ({ id:p.id, slug:p.slug, label:verLabel(p.slug), num:verNum(p.slug) }))
+    .sort((a,b) => a.num - b.num);
+}
+
+async function loadDoc(v){
+  if(state.docs.has(v.slug)) return state.docs.get(v.slug);
+  const u = new URL(API + "/" + v.id);
+  u.searchParams.set("_fields","content");
+  const r = await fetch(u);
+  if(!r.ok) throw new Error("Could not load FOCUS " + v.label + " (HTTP " + r.status + ")");
+  const j = await r.json();
+  const html = (j.content && j.content.rendered) || "";
+  if(!html) throw new Error("FOCUS " + v.label + " returned no content.");
+  const parsed = parseSpec(html, v);
+  state.docs.set(v.slug, parsed);
+  return parsed;
+}
+
+/* ---------------------------------------------------------------- parsing */
+/*
+  Comparable unit = an H4 section (a column or attribute), including its H5/H6
+  children. H3 sections with no H4 children are units in their own right.
+  Key = "<h2slug>/<h3slug>/<h4slug>" with numeric prefixes stripped, so a
+  section that gets renumbered between versions still matches.
+*/
+function parseSpec(html, v){
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const heads = [...doc.querySelectorAll("h2,h3,h4")];
+  const sections = new Map();
+  const order = [];
+  let h2 = null, h3 = null;
+
+  for(let i=0;i<heads.length;i++){
+    const h = heads[i];
+    if(h.tagName === "H2"){ h2 = h; h3 = null; continue; }
+    if(h.tagName === "H3"){
+      h3 = h;
+      // does this H3 own any H4 before the next H2/H3?
+      const next = heads[i+1];
+      const hasChildren = next && next.tagName === "H4";
+      if(!hasChildren) addSection(h, 3);
+      continue;
+    }
+    addSection(h, 4);
+  }
+
+  function addSection(head, level){
+    const nodes = collect(head, level);
+    const key = [h2, level===4 ? h3 : null, head]
+      .filter(Boolean).map(n => stripNum(n.id)).join("/");
+    if(!key || sections.has(key)) return;
+    const rawTitle = norm(head.textContent);
+    const s = {
+      key, level,
+      number: (/^(\d+(?:\.\d+)*)\./.exec(rawTitle) || [,""])[1],
+      title:  stripHeadNum(rawTitle),
+      groupH2: h2 ? stripHeadNum(norm(h2.textContent)) : "",
+      groupH3: (level===4 && h3) ? stripHeadNum(norm(h3.textContent)) : "",
+      h2slug:  h2 ? stripNum(h2.id) : "",
+      h3slug:  (level===4 && h3) ? stripNum(h3.id) : "",
+      slug:    stripNum(head.id),
+      anchor:  head.id,
+      blocks:  blocksFrom(nodes),
+      constraints: constraintsFrom(nodes),
+      subsections: subsectionsFrom(nodes),
+      requirements: requirementsFrom(nodes)
+    };
+    s.textKey = s.blocks.map(b => b.text.toLowerCase()).join("\n");
+    sections.set(key, s);
+    order.push(key);
+  }
+
+  function collect(head, level){
+    const out = [];
+    let n = head.nextElementSibling;
+    while(n){
+      const m = /^H([1-6])$/.exec(n.tagName);
+      if(m && +m[1] <= level) break;
+      out.push(n);
+      n = n.nextElementSibling;
+    }
+    return out;
+  }
+  return { version:v, sections, order };
+}
+
+/* Flatten a section's DOM into ordered, diffable text blocks. */
+function blocksFrom(nodes){
+  const out = [];
+  const push = (type, text, extra) => {
+    const t = norm(text);
+    if(!t) return;
+    out.push(Object.assign({type, text:t}, extra||{}));
+  };
+  const walk = (n) => {
+    const tag = n.tagName;
+    if(/^H[56]$/.test(tag)){ push(tag.toLowerCase(), stripHeadNum(n.textContent)); return; }
+    if(tag === "P"){ push("p", n.textContent); return; }
+    if(tag === "UL" || tag === "OL"){
+      [...n.children].forEach(li => {
+        if(li.tagName !== "LI") return;
+        // own text, excluding nested lists
+        const clone = li.cloneNode(true);
+        [...clone.querySelectorAll("ul,ol")].forEach(x => x.remove());
+        push("li", clone.textContent);
+        [...li.querySelectorAll(":scope > ul > li, :scope > ol > li")]
+          .forEach(sub => push("li", sub.textContent, {depth:1}));
+      });
+      return;
+    }
+    if(tag === "TABLE"){
+      [...n.querySelectorAll("tr")].forEach(tr => {
+        const cells = [...tr.children].map(td => norm(td.textContent));
+        if(cells.join("")) push("tr", cells.join("  │  "), {cells});
+      });
+      return;
+    }
+    if(tag === "PRE" || tag === "BLOCKQUOTE"){ push("pre", n.textContent); return; }
+    if(n.children.length){ [...n.children].forEach(walk); return; }
+    push("p", n.textContent);
+  };
+  nodes.forEach(walk);
+  return out;
+}
+
+/* Pull the "Content Constraints" key/value table into a Map. */
+function constraintsFrom(nodes){
+  const m = new Map();
+  for(const n of nodes){
+    const tables = n.tagName === "TABLE" ? [n] : [...(n.querySelectorAll ? n.querySelectorAll("table") : [])];
+    for(const t of tables){
+      const rows = [...t.querySelectorAll("tr")];
+      if(rows.length < 2) continue;
+      const head = rows[0] ? [...rows[0].children].map(c => norm(c.textContent).toLowerCase()) : [];
+      if(!(head[0] === "constraint" || head[0] === "attribute")) continue;
+      rows.slice(1).forEach(tr => {
+        const c = [...tr.children].map(x => norm(x.textContent));
+        if(c.length >= 2 && c[0]) m.set(c[0], c.slice(1).join(" "));
+      });
+    }
+  }
+  return m;
+}
+
+/* Which H5/H6 subsections exist (normalised titles, numbers stripped). */
+function subsectionsFrom(nodes){
+  const out = [];
+  const walk = n => {
+    if(/^H[56]$/.test(n.tagName)){ out.push(stripHeadNum(n.textContent)); return; }
+    if(n.children && n.children.length) [...n.children].forEach(walk);
+  };
+  nodes.forEach(walk);
+  return out;
+}
+
+/* Normative requirement bullets under the "Requirements" subsection. */
+function requirementsFrom(nodes){
+  const reqs = [];
+  let inReq = false;
+  const walk = n => {
+    if(/^H[56]$/.test(n.tagName)){
+      inReq = /^requirements?$/i.test(stripHeadNum(n.textContent));
+      return;
+    }
+    if(inReq && (n.tagName === "UL" || n.tagName === "OL")){
+      [...n.querySelectorAll("li")].forEach(li => {
+        const clone = li.cloneNode(true);
+        [...clone.querySelectorAll("ul,ol")].forEach(x => x.remove());
+        const t = norm(clone.textContent);
+        if(t) reqs.push(t);
+      });
+      return;
+    }
+    if(n.children && n.children.length) [...n.children].forEach(walk);
+  };
+  nodes.forEach(walk);
+  return reqs;
+}
+
+/* ------------------------------------------------------------------- diff */
+/* Classic LCS diff over an array, returning ops. */
+function diffArrays(a, b, key){
+  const k = key || (x => x);
+  const n = a.length, m = b.length;
+  // trim common prefix/suffix for speed
+  let s = 0; while(s < n && s < m && k(a[s]) === k(b[s])) s++;
+  let e = 0; while(e < n-s && e < m-s && k(a[n-1-e]) === k(b[m-1-e])) e++;
+  const A = a.slice(s, n-e), B = b.slice(s, m-e);
+  const dp = [];
+  for(let i=0;i<=A.length;i++) dp.push(new Uint32Array(B.length+1));
+  for(let i=A.length-1;i>=0;i--)
+    for(let j=B.length-1;j>=0;j--)
+      dp[i][j] = k(A[i]) === k(B[j]) ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const ops = [];
+  for(let i=0;i<s;i++) ops.push({op:"=", a:a[i], b:b[i]});
+  let i=0, j=0;
+  while(i < A.length && j < B.length){
+    if(k(A[i]) === k(B[j])){ ops.push({op:"=", a:A[i], b:B[j]}); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ ops.push({op:"-", a:A[i]}); i++; }
+    else { ops.push({op:"+", b:B[j]}); j++; }
+  }
+  while(i < A.length){ ops.push({op:"-", a:A[i++]}); }
+  while(j < B.length){ ops.push({op:"+", b:B[j++]}); }
+  for(let x=0;x<e;x++) ops.push({op:"=", a:a[n-e+x], b:b[m-e+x]});
+  return ops;
+}
+
+/* Pair up adjacent delete/insert runs that are similar enough to be a rewrite. */
+function pairModifications(ops){
+  const out = [];
+  let i = 0;
+  while(i < ops.length){
+    if(ops[i].op !== "-"){ out.push(ops[i++]); continue; }
+    const dels = []; while(i < ops.length && ops[i].op === "-") dels.push(ops[i++].a);
+    const adds = []; while(i < ops.length && ops[i].op === "+") adds.push(ops[i++].b);
+    if(!adds.length){ dels.forEach(a => out.push({op:"-", a})); continue; }
+
+    const usedB = new Set();
+    dels.forEach(d => {
+      let best = -1, bestScore = 0;
+      adds.forEach((x, idx) => {
+        if(usedB.has(idx) || x.type !== d.type) return;
+        const sc = similarity(d.text, x.text);
+        if(sc > bestScore){ bestScore = sc; best = idx; }
+      });
+      if(best >= 0 && bestScore >= 0.35){ usedB.add(best); out.push({op:"~", a:d, b:adds[best], score:bestScore}); }
+      else out.push({op:"-", a:d});
+    });
+    adds.forEach((x, idx) => { if(!usedB.has(idx)) out.push({op:"+", b:x}); });
+  }
+  // keep original reading order: modifications first, then leftovers, is acceptable
+  return out;
+}
+
+function tokens(s){ return norm(s).toLowerCase().match(/[a-z0-9]+/g) || []; }
+function similarity(a, b){
+  const A = new Set(tokens(a)), B = new Set(tokens(b));
+  if(!A.size || !B.size) return 0;
+  let inter = 0; A.forEach(t => { if(B.has(t)) inter++; });
+  return inter / (A.size + B.size - inter);
+}
+
+/* Word-level diff, returns {left, right} HTML strings. */
+function wordDiff(aText, bText){
+  const split = s => s.match(/\s+|[^\s]+/g) || [];
+  const A = split(aText), B = split(bText);
+  const ops = diffArrays(A, B, w => w.trim().toLowerCase() ? w.trim().toLowerCase() : "\u0000ws");
+  let left = "", right = "";
+  ops.forEach(o => {
+    if(o.op === "="){ left += esc(o.a); right += esc(o.b); }
+    else if(o.op === "-"){ if(o.a.trim()) left += "<del>" + esc(o.a) + "</del>"; else left += esc(o.a); }
+    else if(o.op === "+"){ if(o.b.trim()) right += "<ins>" + esc(o.b) + "</ins>"; else right += esc(o.b); }
+  });
+  return { left, right };
+}
+
+function wordStats(ops){
+  let add = 0, del = 0;
+  ops.forEach(o => {
+    if(o.op === "+") add += tokens(o.b.text).length;
+    else if(o.op === "-") del += tokens(o.a.text).length;
+    else if(o.op === "~"){
+      const inner = diffArrays(tokens(o.a.text), tokens(o.b.text));
+      inner.forEach(x => { if(x.op === "+") add++; else if(x.op === "-") del++; });
+    }
+  });
+  return {add, del};
+}
+
+/* ---------------------------------------------------------- section status */
+function statusOf(key){
+  const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+  const a = A && A.sections.get(key), b = B && B.sections.get(key);
+  if(a && !b) return "removed";
+  if(!a && b) return "added";
+  if(!a && !b) return "missing";
+  return a.textKey === b.textKey ? (a.number === b.number ? "same" : "renumbered") : "modified";
+}
+
+function unionKeys(){
+  const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+  const seen = new Set(), out = [];
+  const push = (k, src) => { if(!seen.has(k)){ seen.add(k); out.push({key:k, src}); } };
+  // walk the newer document first so ordering follows the current spec
+  B.order.forEach(k => push(k, "b"));
+  A.order.forEach(k => push(k, "a"));
+  return out.map(o => o.key);
+}
+
+/* ------------------------------------------------------------------ render */
+function renderPicker(){
+  const sel = $("#sec");
+  const keys = unionKeys();
+  const groups = new Map();
+  const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+
+  keys.forEach(k => {
+    const s = (B.sections.get(k) || A.sections.get(k));
+    const st = statusOf(k);
+    if(state.onlyChanged && (st === "same")) return;
+    const g = [s.groupH2, s.groupH3].filter(Boolean).join(" › ") || "Other";
+    if(!groups.has(g)) groups.set(g, []);
+    groups.set(g, groups.get(g).concat([{key:k, s, st}]));
+  });
+
+  sel.innerHTML = "";
+  let count = 0;
+  groups.forEach((items, gname) => {
+    const og = el("optgroup"); og.label = gname;
+    items.forEach(({key, s, st}) => {
+      const tag = st === "added" ? "  ✚ added" : st === "removed" ? "  ✖ removed"
+                : st === "modified" ? "  ● changed" : st === "renumbered" ? "  ⇄ renumbered" : "";
+      const o = el("option", null, s.title + tag);
+      o.value = key;
+      og.appendChild(o); count++;
+    });
+    if(items.length) sel.appendChild(og);
+  });
+
+  if(!count){
+    const o = el("option", null, "No changed sections between these versions");
+    o.value = ""; sel.appendChild(o);
+  }
+  if(state.sec && !sel.querySelector('option[value="' + cssEsc(state.sec) + '"]')){
+    // Partial keys (e.g. "cost-and-usage/billed-cost" from the schema maps) match
+    // the full key that ends with them, then fall back to the last segment.
+    const opts = [...sel.options].map(o => o.value).filter(Boolean);
+    const last = "/" + state.sec.split("/").pop();
+    const hit = opts.find(k => k.endsWith("/" + state.sec)) || opts.find(k => k.endsWith(last));
+    if(hit) state.sec = hit;
+  }
+  if(state.sec && sel.querySelector('option[value="' + cssEsc(state.sec) + '"]')) sel.value = state.sec;
+  else { state.sec = sel.value || null; }
+}
+function cssEsc(s){ return s.replace(/["\\]/g, "\\$&"); }
+
+function docUrl(v, s){
+  // Pretty docs URL only exists for dataset columns; otherwise deep-link the spec anchor.
+  if(s && s.h2slug === "datasets" && s.h3slug && s.slug)
+    return DOCS + v.slug + "/columns/" + s.h3slug + "/" + s.slug + "/";
+  if(s && s.anchor) return SPECP + v.slug + "/#" + s.anchor;
+  return SPECP + v.slug + "/";
+}
+
+function render(){
+  const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+  const key = state.sec;
+  const host = $("#app");
+  if(!key){ $("#summary").innerHTML = ""; $("#structured").innerHTML = ""; $("#diff").innerHTML = ""; return; }
+
+  const a = A.sections.get(key), b = B.sections.get(key);
+  const s = b || a;
+  const st = statusOf(key);
+
+  /* ---- summary ---- */
+  const badge = {
+    added:    ['b-add',  "Added in " + state.to.label],
+    removed:  ['b-del',  "Removed in " + state.to.label],
+    modified: ['b-mod',  "Modified"],
+    renumbered:['b-moved',"Renumbered only"],
+    same:     ['b-same', "No change"]
+  }[st] || ['b-same','—'];
+
+  const blocksA = a ? a.blocks : [], blocksB = b ? b.blocks : [];
+  let ops = diffArrays(blocksA, blocksB, x => x.type + "\u0001" + x.text.toLowerCase());
+  ops = pairModifications(ops);
+  const ws = wordStats(ops);
+
+  const sum = el("div","summary");
+  sum.innerHTML =
+    '<div class="statrow"><span class="badge ' + badge[0] + '">' + esc(badge[1]) + '</span></div>' +
+    '<h1>' + esc(s.title) + '</h1>' +
+    '<div class="sub">' +
+      esc([s.groupH2, s.groupH3].filter(Boolean).join(" › ")) +
+      (a && b && a.number !== b.number
+        ? ' · <span class="mono">' + esc(a.number) + '</span> → <span class="mono">' + esc(b.number) + '</span> <em>(renumbered)</em>'
+        : ' · <span class="mono">' + esc(s.number || "") + '</span>') +
+    '</div>' +
+    '<div class="statrow">' +
+      '<span class="stat"><b>' + blocksA.length + '</b> blocks in ' + esc(state.from.label) + '</span>' +
+      '<span class="stat">→</span>' +
+      '<span class="stat"><b>' + blocksB.length + '</b> blocks in ' + esc(state.to.label) + '</span>' +
+      '<span class="stat"><span class="plus">+' + ws.add + '</span> / <span class="minus">−' + ws.del + '</span> words</span>' +
+    '</div>' +
+    '<div class="permalinks">' +
+      (a ? '<a href="' + docUrl(state.from, a) + '" target="_blank" rel="noopener">Open ' + esc(state.from.label) + ' page ↗</a>' : '<span class="stat">Not present in ' + esc(state.from.label) + '</span>') +
+      (b ? '<a href="' + docUrl(state.to, b) + '" target="_blank" rel="noopener">Open ' + esc(state.to.label) + ' page ↗</a>' : '<span class="stat">Not present in ' + esc(state.to.label) + '</span>') +
+      '<a href="#" id="copylink">Copy link to this comparison</a>' +
+    '</div>';
+  $("#summary").innerHTML = ""; $("#summary").appendChild(sum);
+  sum.querySelector("#copylink").addEventListener("click", ev => {
+    ev.preventDefault();
+    navigator.clipboard.writeText(location.href).then(() => {
+      ev.target.textContent = "Link copied ✓";
+      setTimeout(() => { ev.target.textContent = "Copy link to this comparison"; }, 1800);
+    }).catch(()=>{});
+  });
+
+  /* ---- structured deltas ---- */
+  const cards = $("#structured"); cards.innerHTML = "";
+  cards.appendChild(constraintsCard(a, b));
+  cards.appendChild(requirementsCard(a, b));
+  cards.appendChild(subsectionsCard(a, b));
+
+  /* ---- prose diff ---- */
+  renderDiff(ops);
+  host.classList.remove("hidden");
+}
+
+function card(title, bodyNode, tight){
+  const c = el("div","card");
+  c.appendChild(el("h2", null, title));
+  const bd = el("div", "body" + (tight ? " tight" : ""));
+  bd.appendChild(bodyNode);
+  c.appendChild(bd);
+  return c;
+}
+
+function constraintsCard(a, b){
+  const ka = a ? a.constraints : new Map(), kb = b ? b.constraints : new Map();
+  const keys = [...new Set([...kb.keys(), ...ka.keys()])];
+  if(!keys.length) return card("Content constraints", el("div","nochange","This section has no constraints table."));
+  const t = el("table","kv");
+  t.innerHTML = "<thead><tr><th>Constraint</th><th>" + esc(state.from.label) + "</th><th>" + esc(state.to.label) + "</th></tr></thead>";
+  const tb = el("tbody");
+  let changes = 0;
+  keys.forEach(k => {
+    const va = ka.get(k), vb = kb.get(k);
+    const tr = el("tr");
+    let cls = "";
+    if(va == null && vb != null){ cls = "r-add"; changes++; }
+    else if(va != null && vb == null){ cls = "r-del"; changes++; }
+    else if(norm(va) !== norm(vb)){ cls = "r-mod"; changes++; }
+    tr.className = cls;
+    tr.innerHTML = '<td class="k">' + esc(k) + '</td>' +
+      '<td>' + (va == null ? '<span class="stat">—</span>' : (cls==="r-mod"||cls==="r-del" ? '<span class="old">'+esc(va)+'</span>' : esc(va))) + '</td>' +
+      '<td>' + (vb == null ? '<span class="stat">—</span>' : (cls==="r-mod"||cls==="r-add" ? '<span class="new">'+esc(vb)+'</span>' : esc(vb))) + '</td>';
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  const c = card("Content constraints" + (changes ? " · " + changes + " changed" : " · unchanged"), t, true);
+  return c;
+}
+
+function requirementsCard(a, b){
+  const ra = a ? a.requirements : [], rb = b ? b.requirements : [];
+  if(!ra.length && !rb.length) return card("Normative requirements", el("div","nochange","This section defines no requirement bullets."));
+  let ops = diffArrays(ra, rb, x => x.toLowerCase());
+  ops = pairModifications(ops.map(o => ({
+    op:o.op,
+    a:o.a!=null?{type:"li",text:o.a}:undefined,
+    b:o.b!=null?{type:"li",text:o.b}:undefined
+  })));
+  const ul = el("ul","deltalist");
+  let n = 0;
+  ops.forEach(o => {
+    if(o.op === "=") return;
+    n++;
+    const li = el("li");
+    const sym = el("span","sym " + (o.op==="+"?"a":o.op==="-"?"d":"m"), o.op==="+"?"+":o.op==="-"?"−":"~");
+    li.appendChild(sym);
+    const txt = el("span");
+    if(o.op === "~"){ const wd = wordDiff(o.a.text, o.b.text); txt.innerHTML = wd.right; }
+    else txt.textContent = (o.a || o.b).text;
+    li.appendChild(txt);
+    ul.appendChild(li);
+  });
+  const head = "Normative requirements · " + ra.length + " → " + rb.length;
+  if(!n) return card(head + " · unchanged", el("div","nochange","No requirement bullets were added, removed, or reworded."), false);
+  return card(head + " · " + n + " changed", ul, false);
+}
+
+function subsectionsCard(a, b){
+  const sa = a ? a.subsections : [], sb = b ? b.subsections : [];
+  const low = x => x.toLowerCase();
+  const setA = new Set(sa.map(low)), setB = new Set(sb.map(low));
+  const added = sb.filter(x => !setA.has(low(x)));
+  const removed = sa.filter(x => !setB.has(low(x)));
+  if(!added.length && !removed.length)
+    return card("Subsections · unchanged", el("div","nochange", sb.length ? sb.length + " subsections, none added or removed." : "No subsections."), false);
+  const ul = el("ul","deltalist");
+  added.forEach(x => { const li = el("li"); li.appendChild(el("span","sym a","+")); li.appendChild(el("span",null,x)); ul.appendChild(li); });
+  removed.forEach(x => { const li = el("li"); li.appendChild(el("span","sym d","−")); li.appendChild(el("span",null,x)); ul.appendChild(li); });
+  return card("Subsections · " + (added.length + removed.length) + " changed", ul, false);
+}
+
+function blockClass(t){
+  return t === "h5" ? "blk-h5" : t === "h6" ? "blk-h6" : t === "li" ? "blk-li"
+       : t === "tr" ? "blk-tr" : t === "pre" ? "blk-pre" : "blk-p";
+}
+
+function renderDiff(ops){
+  const host = $("#diff"); host.innerHTML = "";
+  const wrap = el("div","diffwrap");
+  const uni = state.view === "unified";
+
+  const head = el("div","diffhead" + (uni ? " uni" : ""));
+  if(uni) head.appendChild(el("div", null, state.from.label + " → " + state.to.label + " (unified)"));
+  else { head.appendChild(el("div", null, state.from.label)); head.appendChild(el("div", null, state.to.label)); }
+  wrap.appendChild(head);
+
+  const rows = el("div","rows");
+  let shown = 0;
+
+  ops.forEach(o => {
+    const changed = o.op !== "=";
+    if(state.onlyDiffRows && !changed) return;
+    shown++;
+
+    if(uni){
+      const emit = (blk, mark, cls, html) => {
+        const r = el("div","row uni");
+        const c = el("div","cell " + cls);
+        const inner = el("div", blockClass(blk.type));
+        inner.innerHTML = '<span class="marker ' + (mark==="+"?"a":mark==="-"?"d":"") + '">' + (mark||"&nbsp;") + '</span>' + (html != null ? html : esc(blk.text));
+        c.appendChild(inner); r.appendChild(c); rows.appendChild(r);
+      };
+      if(o.op === "=") emit(o.a, "", "mod");
+      else if(o.op === "-") emit(o.a, "−", "del");
+      else if(o.op === "+") emit(o.b, "+", "add");
+      else { const wd = wordDiff(o.a.text, o.b.text); emit(o.a, "−", "del", wd.left); emit(o.b, "+", "add", wd.right); }
+      return;
+    }
+
+    const r = el("div","row" + (o.op === "~" ? " mod" : ""));
+    const L = el("div","cell"), R = el("div","cell");
+    const mk = (cell, blk, html, cls) => {
+      cell.className = "cell " + (cls || "");
+      if(!blk){ cell.classList.add("empty"); return; }
+      const inner = el("div", blockClass(blk.type));
+      if(html != null) inner.innerHTML = html; else inner.textContent = blk.text;
+      cell.appendChild(inner);
+    };
+    if(o.op === "="){ mk(L, o.a, null, "mod"); mk(R, o.b, null, "mod"); }
+    else if(o.op === "-"){ mk(L, o.a, null, "del"); mk(R, null, null, ""); }
+    else if(o.op === "+"){ mk(L, null, null, ""); mk(R, o.b, null, "add"); }
+    else { const wd = wordDiff(o.a.text, o.b.text); mk(L, o.a, wd.left, "mod"); mk(R, o.b, wd.right, "mod"); }
+    r.appendChild(L); r.appendChild(R);
+    rows.appendChild(r);
+  });
+
+  if(!shown){
+    const r = el("div","row uni");
+    const c = el("div","cell");
+    c.appendChild(el("div","nochange","No differences to display."));
+    r.appendChild(c); rows.appendChild(r);
+  }
+  wrap.appendChild(rows);
+  host.appendChild(wrap);
+}
+
+/* Render, but never leave the page blank if one section trips the parser. */
+function safeRender(){
+  try{ render(); }
+  catch(e){
+    console.error("[spec-compare] render failed", e);
+    $("#structured").innerHTML = "";
+    $("#diff").innerHTML = '<div class="err"><b>This section could not be rendered.</b><br>' +
+      esc(e.message || String(e)) + '<br><br>Pick another section, or report the section key ' +
+      '<span class="mono">' + esc(state.sec || "(none)") + '</span>.</div>';
+  }
+}
+
+/* --------------------------------------------------------------- URL state */
+function readHash(){
+  const p = new URLSearchParams(location.hash.replace(/^#/,""));
+  return { from:p.get("from"), to:p.get("to"), sec:p.get("sec"), view:p.get("view") };
+}
+function writeHash(){
+  const p = new URLSearchParams();
+  p.set("from", state.from.slug); p.set("to", state.to.slug);
+  if(state.sec) p.set("sec", state.sec);
+  if(state.view !== "split") p.set("view", state.view);
+  history.replaceState(null, "", "#" + p.toString());
+}
+
+/* -------------------------------------------------------------------- boot */
+async function reload(){
+  $("#boot").classList.remove("hidden");
+  $("#app").classList.add("hidden");
+  $("#error").classList.add("hidden");
+  try{
+    await Promise.all([loadDoc(state.from), loadDoc(state.to)]);
+    renderPicker();
+    safeRender();
+    writeHash();
+    $("#boot").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+  }catch(e){ fail(e); }
+}
+function fail(e){
+  $("#boot").classList.add("hidden");
+  const box = $("#error");
+  box.className = "err";
+  box.innerHTML = "<b>Could not load the specification.</b><br>" + esc(e.message || String(e)) +
+    "<br><br>This tool reads the published spec live from <span class='mono'>focus.finops.org</span>. " +
+    "If that host is unreachable from your network the comparison cannot be built.";
+  box.classList.remove("hidden");
+}
+
+async function init(){
+  try{
+    state.versions = await loadVersions();
+    if(state.versions.length < 2) throw new Error("Fewer than two spec versions were found.");
+  }catch(e){ return fail(e); }
+
+  const h = readHash();
+  const byslug = s => state.versions.find(v => v.slug === s);
+  const last = state.versions[state.versions.length-1];
+  const prev = state.versions[state.versions.length-2];
+  state.from = byslug(h.from) || prev;
+  state.to   = byslug(h.to)   || last;
+  state.sec  = h.sec || "datasets/cost-and-usage/billed-cost";
+  state.view = h.view === "unified" ? "unified" : "split";
+
+  const fill = (sel, cur) => {
+    sel.innerHTML = "";
+    state.versions.forEach(v => { const o = el("option", null, v.label); o.value = v.slug; sel.appendChild(o); });
+    sel.value = cur.slug;
+  };
+  fill($("#fromV"), state.from); fill($("#toV"), state.to);
+  $("#vSplit").setAttribute("aria-pressed", String(state.view === "split"));
+  $("#vUni").setAttribute("aria-pressed", String(state.view === "unified"));
+
+  $("#fromV").addEventListener("change", e => { state.from = byslug(e.target.value); reload(); });
+  $("#toV").addEventListener("change",   e => { state.to   = byslug(e.target.value); reload(); });
+  $("#swap").addEventListener("click", () => {
+    const t = state.from; state.from = state.to; state.to = t;
+    $("#fromV").value = state.from.slug; $("#toV").value = state.to.slug;
+    reload();
+  });
+  $("#sec").addEventListener("change", e => { state.sec = e.target.value; safeRender(); writeHash(); });
+  $("#onlyChanged").addEventListener("change", e => { state.onlyChanged = e.target.checked; renderPicker(); safeRender(); writeHash(); });
+  $("#onlyDiffRows").addEventListener("change", e => { state.onlyDiffRows = e.target.checked; safeRender(); });
+  $("#vSplit").addEventListener("click", () => setView("split"));
+  $("#vUni").addEventListener("click",   () => setView("unified"));
+  function setView(v){
+    state.view = v;
+    $("#vSplit").setAttribute("aria-pressed", String(v === "split"));
+    $("#vUni").setAttribute("aria-pressed", String(v === "unified"));
+    safeRender(); writeHash();
+  }
+
+  reload();
+}
+init();
+</script>
+</body>
+</html>

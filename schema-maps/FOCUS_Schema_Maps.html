@@ -80,8 +80,30 @@ header.site-header .hcommit{position:absolute;top:10px;right:18px;margin-left:0}
 .htitle{font-weight:700;font-size:14.5px;color:#fff;white-space:nowrap;padding-left:14px;
   margin-left:2px;border-left:1px solid rgba(255,255,255,.18);overflow:hidden;text-overflow:ellipsis;min-width:0}
 /* ---- interactive toolbar + highlight layers (HTML view only; off by default) ---- */
-.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;
-  background:var(--dark);color:#fff;padding:10px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:13px}
+.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:60;
+  background:var(--dark);color:#fff;padding:10px 18px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:13px}
+.vjump{display:inline-flex;gap:4px;margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)}
+.vjump a{color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px}
+.vjump a:hover{background:rgba(255,255,255,.14)}
+.cmplink{margin-left:auto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:5px 14px;font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.cmplink:hover{border-color:#fff}
+.legend{font-size:11.5px;color:var(--ink2);margin:-12px 4px 0;line-height:1.45}
+/* per-version "what changed" panel (built by script from the column flags) */
+.changes{margin:0 2px 12px;border:1px solid var(--line);border-radius:8px;max-width:1000px;font-size:12.5px;background:#fbfbfc}
+.changes summary{cursor:pointer;padding:8px 12px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.changes .pill{font-size:11px;font-weight:700;border-radius:999px;padding:1px 9px;color:#fff}
+.changes .cmpall{margin-left:auto;font-size:11.5px;color:#bd3bfd;text-decoration:none;font-weight:600}
+.changes .cbody{display:flex;gap:18px;flex-wrap:wrap;padding:4px 12px 12px;border-top:1px solid var(--line)}
+.changes .cgrp{flex:1 1 280px;min-width:0}
+.changes h4{font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 4px}
+.changes ul{list-style:none}
+.changes li{padding:3px 0;border-top:1px solid rgba(0,0,0,.05);line-height:1.35}
+.changes li:first-child{border-top:none}
+.changes .go{background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.changes .go:hover{color:#bd3bfd;text-decoration:underline}
+.changes .why{display:block;color:var(--ink2);font-size:11.5px}
+.changes .ds{color:var(--ink3);font-size:11px;margin-left:4px}
+.changes .diff{font-size:11px;color:#bd3bfd;font-weight:600;text-decoration:none;margin-left:6px;white-space:nowrap}
 .toolbar .tlabel{font-weight:700;margin-right:4px}
 .tg{cursor:pointer;border:1px solid rgba(255,255,255,.32);background:transparent;color:#fff;border-radius:999px;padding:5px 13px;font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:7px}
 .tg:hover{border-color:rgba(255,255,255,.7)}
@@ -89,13 +111,13 @@ header.site-header .hcommit{position:absolute;top:10px;right:18px;margin-left:0}
 .tg .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tg .dot.kf{border-radius:50%}
 .thint{font-size:11.5px;color:rgba(255,255,255,.72);margin-left:4px}
-.dlall{margin-left:auto;background:#bd3bfd;color:#fff;border-radius:999px;padding:6px 15px;font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap}
+.dlall{background:#bd3bfd;color:#fff;border-radius:999px;padding:6px 15px;font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap}
 .dlall:hover{background:#a92ee6}
 /* highlight states */
-body.hl-new .col[data-new]{background:#eafaf1;box-shadow:inset 4px 0 0 #1fa382}
-body.hl-changed .col[data-changed]{background:#fff4e6;box-shadow:inset 4px 0 0 #e8920c}
-body.hl-deprecated .col[data-deprecated]{background:#fff0f0;box-shadow:inset 4px 0 0 #e03131}
-body.hl-mandatory .col[data-mandatory]{background:#eaf2ff;box-shadow:inset 4px 0 0 #2563eb}
+/* new/changed/deprecated/mandatory are painted by script: one stripe per active
+   flag, stacked left to right, so a column that is e.g. changed AND mandatory
+   shows both colors */
+.col.flash{outline:3px solid #bd3bfd;outline-offset:-1px;transition:outline-color 1.2s}
 body.hl-rel .col.keycol{background:#f6ecff}
 .kbadge{display:none;font-size:8.5px;font-weight:700;font-family:"IBM Plex Mono",monospace;border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:middle}
 body.hl-rel .col.keycol .kbadge{display:inline-block}
@@ -127,7 +149,7 @@ body.hl-rel .relnote{display:block}
   body{padding:0;gap:0;display:block}
   .page{display:block;overflow:visible}
   .sheet{box-shadow:none;border-radius:0}
-  .toolbar{display:none!important}
+  .toolbar,.legend,.changes{display:none!important}
   .relnote{display:none!important}
   .relsvg{display:none!important}
   .kbadge{display:none!important}
@@ -151,8 +173,21 @@ body.hl-rel .relnote{display:block}
 </head>
 <body>
 <aside class="unofficial-banner">
-  <p><strong>Unofficial community project.</strong> Prepared by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is not an official FOCUS, FinOps Foundation, or Linux Foundation publication. Ratings below are a reading of public documentation. They are not a certification result. Official certification, where it exists, is labeled separately as FinOps Certified FOCUS Conformant.</p>
+  <p><strong>Unofficial community project.</strong> Prepared by Beau Nelford, FOCUS Technical Community Architect, acting in a personal and community capacity. This is not an official FOCUS, FinOps Foundation, or Linux Foundation publication.</p>
 </aside>
+
+<div class="toolbar" role="toolbar" aria-label="Highlight change categories">
+  <span class="tlabel">Highlight</span>
+  <button class="tg" data-k="new" aria-pressed="false"><span class="dot" style="background:#1fa382"></span>New in version</button>
+  <button class="tg" data-k="changed" aria-pressed="false"><span class="dot" style="background:#e8920c"></span>Changed</button>
+  <button class="tg" data-k="deprecated" aria-pressed="false"><span class="dot" style="background:#e03131"></span>Deprecated</button>
+  <button class="tg" data-k="mandatory" aria-pressed="false"><span class="dot" style="background:#2563eb"></span>Mandatory</button>
+  <button class="tg" data-k="rel" aria-pressed="false"><span class="dot kf" style="background:#bd3bfd"></span>Dataset joins</button>
+  <span class="vjump" aria-label="Jump to version"><a href="#v1.0">1.0</a><a href="#v1.1">1.1</a><a href="#v1.2">1.2</a><a href="#v1.3">1.3</a><a href="#v1.4">1.4</a><a href="#v1.5">1.5</a></span>
+  <a class="cmplink" href="../spec-compare/focus-spec-compare.html">Spec compare</a>
+  <a class="dlall" href="FOCUS_Schema_Maps.pdf" download>&#x2193; Download all (PDF)</a>
+</div>
+<p class="legend">New = added since the previous version &middot; Changed = definition, format, or feature level materially changed &middot; Deprecated = marked for removal &middot; Mandatory = FOCUS requires this column unconditionally (excludes columns required only when a provider supports a given capability) &middot; Joins follow the FOCUS dataset relationships (no enforced keys). A column with several flags shows one stripe per flag. Open &ldquo;What changed&rdquo; under each version for the full list.</p>
 
 <div class="relnote"><b>About these joins.</b> FOCUS does not define primary or foreign keys. The <b>JOIN&nbsp;KEY</b> (owner side) and <b>JOIN</b> (referencing side) badges mark the columns FOCUS uses to join datasets &mdash; defined from v1.3 in each dataset&rsquo;s join table &mdash; not enforced database keys. Note: Cost and Usage &harr; Contract Commitment joins on Contract Commitment ID, which lives inside the JSON object array in the <b>Contract Applied</b> column (not a scalar column). The v1.4 Invoice Detail and Billing Period joins are multi-column (Invoice Issuer Name + Invoice ID [+ Invoice Detail ID]; Billing Period Start + Invoice Issuer Name). The v1.5 SKU Price dataset (preview) joins Cost and Usage on SKU Price ID within the same Service Provider Name; resolving one price also matches Contract ID (from Contract Applied), Pricing Currency, a single Unit Price Type, and the charge period against SKU Price Effective Start/End. SKU Price can also join Contract Commitment on Contract ID.</div>
 <div class="page" id="v1.0">
@@ -373,8 +408,74 @@ body.hl-rel .relnote{display:block}
  var cls={'new':'hl-new','changed':'hl-changed','deprecated':'hl-deprecated','mandatory':'hl-mandatory','rel':'hl-rel'};
  document.querySelectorAll('.tg').forEach(function(b){b.addEventListener('click',function(){
    var k=b.getAttribute('data-k');b.classList.toggle('on');document.body.classList.toggle(cls[k]);
-   if(k==='rel')requestAnimationFrame(draw);
+   b.setAttribute('aria-pressed',b.classList.contains('on')?'true':'false');
+   if(k==='rel')requestAnimationFrame(draw);else paint();
  });});
+ // One inset stripe per active flag (first listed is drawn on top, so stripes
+ // stack left to right) and a tint blended from the same flags.
+ var FLAGS=[['new','#1fa382','#eafaf1'],['changed','#e8920c','#fff4e6'],['deprecated','#e03131','#fff0f0'],['mandatory','#2563eb','#eaf2ff']];
+ function paint(){
+   var act=FLAGS.filter(function(f){return document.body.classList.contains('hl-'+f[0]);});
+   document.querySelectorAll('.col').forEach(function(a){
+     var on=act.filter(function(f){return a.hasAttribute('data-'+f[0]);});
+     a.style.boxShadow=on.map(function(f,i){return 'inset '+(4*(i+1))+'px 0 0 '+f[1];}).join(',');
+     a.style.background=on.length>1?'linear-gradient(90deg,'+on.map(function(f){return f[2];}).join(',')+')':(on.length?on[0][2]:'');
+     a.style.paddingLeft=on.length>1?(4*on.length+7)+'px':'';
+   });
+ }
+
+ // ---- per-version "What changed" panel ----
+ // Spec compare reads the published spec from focus.finops.org, so it can only
+ // diff versions published there (1.5 is a candidate release on GitHub).
+ var PUBLISHED=['1.0','1.1','1.2','1.3','1.4'];
+ var CMP='../spec-compare/focus-spec-compare.html';
+ function slug(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+ function vslug(v){return 'v'+v.replace('.','-');}
+ var pages=document.querySelectorAll('.page');
+ pages.forEach(function(pg,i){
+   var v=pg.id.replace(/^v/,''),prev=i?pages[i-1].id.replace(/^v/,''):null;
+   var canCmp=prev&&PUBLISHED.indexOf(v)>=0&&PUBLISHED.indexOf(prev)>=0;
+   var seen={},grp={'new':[],changed:[],deprecated:[]};
+   pg.querySelectorAll('.col').forEach(function(a){
+     var id=a.getAttribute('data-col'),ds=a.closest('.dscont').getAttribute('data-ds');
+     ['new','changed','deprecated'].forEach(function(k){
+       if(!a.hasAttribute('data-'+k))return;
+       var key=k+'|'+id;
+       if(seen[key]){if(seen[key].ds.indexOf(ds)<0)seen[key].ds.push(ds);return;}
+       var why=k==='changed'?(a.getAttribute('data-flag')||'').replace(/^Changed in this version:?\s*/,''):(k==='deprecated'?a.getAttribute('data-deprmsg'):'');
+       seen[key]={el:a,name:a.getAttribute('data-name'),ds:[ds],why:why};grp[k].push(seen[key]);
+     });
+   });
+   var total=grp['new'].length+grp.changed.length+grp.deprecated.length;
+   if(!total)return;
+   var stats=pg.querySelector('.stats');if(!stats)return;
+   var d=document.createElement('details');d.className='changes';
+   var cnt=function(n,c,l){return n?'<span class="pill" style="background:'+c+'">'+n+' '+l+'</span>':'';};
+   var h='<summary>What changed in '+esc(v)+(prev?' since '+esc(prev):'')+' '
+     +cnt(grp['new'].length,'#1fa382','new')+cnt(grp.changed.length,'#e8920c','changed')+cnt(grp.deprecated.length,'#e03131','deprecated')
+     +(canCmp?'<a class="cmpall" href="'+CMP+'#from='+vslug(prev)+'&to='+vslug(v)+'">Compare full spec text '+esc(prev)+' &rarr; '+esc(v)+' &#8599;</a>':'')
+     +'</summary><div class="cbody">';
+   [['new','New','#1fa382'],['changed','Changed','#e8920c'],['deprecated','Deprecated','#e03131']].forEach(function(g){
+     var items=grp[g[0]];if(!items.length)return;
+     h+='<div class="cgrp"><h4 style="color:'+g[2]+'">'+g[1]+' ('+items.length+')</h4><ul>';
+     items.forEach(function(it,j){
+       var sec=slug(it.ds[0])+'/'+slug(it.name);
+       h+='<li><button class="go" data-k="'+g[0]+'" data-j="'+j+'">'+esc(it.name)+'</button>'
+         +(it.ds.length>1||it.ds[0]!=='Cost and Usage'?'<span class="ds">'+esc(it.ds.join(', '))+'</span>':'')
+         +(g[0]!=='new'&&canCmp?'<a class="diff" href="'+CMP+'#from='+vslug(prev)+'&to='+vslug(v)+'&sec='+encodeURIComponent(sec)+'">diff &#8599;</a>':'')
+         +(it.why?'<span class="why">'+esc(it.why)+'</span>':'')+'</li>';
+     });
+     h+='</ul></div>';
+   });
+   d.innerHTML=h+'</div>';
+   d.addEventListener('click',function(e){
+     var b=e.target.closest('.go');if(!b)return;
+     var a=grp[b.getAttribute('data-k')][+b.getAttribute('data-j')].el;
+     a.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+     a.classList.add('flash');setTimeout(function(){a.classList.remove('flash');},1600);
+   });
+   stats.parentNode.insertBefore(d,stats.nextSibling);
+ });
  function draw(){
    document.querySelectorAll('.sheet').forEach(function(sheet){
      if(sheet.getAttribute('data-rel')!=='1')return;
@@ -445,19 +546,6 @@ body.hl-rel .relnote{display:block}
  document.addEventListener('mouseover',function(e){var a=e.target.closest&&e.target.closest('.col');if(!a)return;fill(a);tip.style.display='block';place(e);});
  document.addEventListener('mousemove',function(e){if(tip.style.display==='block'&&e.target.closest&&e.target.closest('.col'))place(e);});
  document.addEventListener('mouseout',function(e){var a=e.target.closest&&e.target.closest('.col');if(a&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('.col')))tip.style.display='none';});
-})();
-</script>
-<script>window.SITE_BASE="../";</script>
-<script>
-(function(){
-  // The merged header (title + wrapping highlight toolbar) has no fixed
-  // height, so keep --header-h (leftnav/scrim offsets) matched to it.
-  var header=document.querySelector('header.site-header');
-  if(!header)return;
-  function sync(){document.documentElement.style.setProperty('--header-h',header.offsetHeight+'px');}
-  sync();
-  window.addEventListener('load',sync);
-  window.addEventListener('resize',sync);
 })();
 </script>
 <aside class="unofficial-footer">

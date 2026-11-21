@@ -8,7 +8,7 @@ These tools are a personal and community project by Beau Nelford, FOCUS Technica
 
 ## Website
 
-The tools are published at https://beau-finopsorg.github.io/focus-tools/. That site is the interactive schema maps (FOCUS 1.0 through 1.5), the version PDFs, and the reference architectures, with the unofficial banner on the landing page.
+The tools are published at https://beau-finopsorg.github.io/focus-tools/. That site is the interactive schema maps (FOCUS 1.0 through 1.5), the version PDFs, the spec compare tool, and the reference architectures, with the unofficial banner on the landing page.
 
 Version 1.5 is a Candidate Release, pending ratification on Dec 3, 2026, and may change. It has no standalone PDF; use the 1.5 tab in the interactive map.
 
@@ -18,7 +18,8 @@ The site is GitHub Pages from the `main` branch, root (`/`) folder. There is no 
 
 - [Schema maps](schema-maps/FOCUS_Schema_Maps.html): interactive HTML, plus PDFs for specification versions 1.0 through 1.4. The 1.5 sheet is a candidate / pre-release and may change.
 - [Reference architectures](reference-architectures/focus-reference-architectures.html).
-- Later, possibly a column graph or a spec compare.
+- [Spec compare](spec-compare/focus-spec-compare.html): word-level diff of any section between two published versions. It reads the specification live from focus.finops.org, so it covers published versions only (1.0 through 1.4, not the 1.5 candidate).
+- Later, possibly a column graph.
 
 If a tool and the specification disagree, the specification wins.
 
