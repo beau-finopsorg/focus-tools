@@ -258,6 +258,7 @@ footer.site{margin-top:40px;}
       </div>
     </div>
     <label class="chk"><input type="checkbox" id="onlyChanged"> Changed sections only</label>
+    <label class="chk" title="Sections that moved or were renumbered with no text change"><input type="checkbox" id="showReorg"> Count reorganized as changes</label>
     <label class="chk"><input type="checkbox" id="onlyDiffRows"> Hide unchanged lines</label>
   </div>
 </div>
@@ -319,6 +320,7 @@ const state = {
   from: null, to: null, sec: null,
   view: "split",
   onlyChanged: false,
+  showReorg: false,      // reorganized (moved/renumbered, same text) is not a change by default
   onlyDiffRows: false
 };
 
@@ -333,6 +335,20 @@ const verLabel = slug => "v" + slug.replace(/^v/,"").replace(/-/g,".");
 const verNum   = slug => { const m=/^v?(\d+)-(\d+)/.exec(slug); return m ? (+m[1])*1000 + (+m[2]) : 0; };
 
 /* --------------------------------------------------------------- fetching */
+/* Fetch JSON from focus.finops.org; a hang counts as unreachable after 20s. */
+async function getJSON(u){
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 20000);
+  try{
+    const r = await fetch(u, {signal: ctl.signal});
+    if(!r.ok) throw Object.assign(new Error("focus.finops.org returned HTTP " + r.status), {offline: r.status >= 500});
+    return await r.json();
+  }catch(e){
+    if(e.offline !== undefined) throw e;
+    throw Object.assign(new Error("focus.finops.org did not respond"), {offline: true});
+  }finally{ clearTimeout(t); }
+}
+
 async function loadVersions(){
   let list = [];
   try{
@@ -340,8 +356,7 @@ async function loadVersions(){
     u.searchParams.set("parent", SPEC_PARENT);
     u.searchParams.set("per_page","100");
     u.searchParams.set("_fields","id,slug,title");
-    const r = await fetch(u);
-    if(r.ok) list = await r.json();
+    list = await getJSON(u);
   }catch(e){ /* fall through */ }
 
   if(!Array.isArray(list) || !list.length) list = FALLBACK_VERSIONS;
@@ -356,9 +371,7 @@ async function loadDoc(v){
   if(state.docs.has(v.slug)) return state.docs.get(v.slug);
   const u = new URL(API + "/" + v.id);
   u.searchParams.set("_fields","content");
-  const r = await fetch(u);
-  if(!r.ok) throw new Error("Could not load FOCUS " + v.label + " (HTTP " + r.status + ")");
-  const j = await r.json();
+  const j = await getJSON(u);
   const html = (j.content && j.content.rendered) || "";
   if(!html) throw new Error("FOCUS " + v.label + " returned no content.");
   const parsed = parseSpec(html, v);
@@ -370,6 +383,9 @@ async function loadDoc(v){
 /*
   Comparable unit = an H4 section (a column or attribute), including its H5/H6
   children. H3 sections with no H4 children are units in their own right.
+  Before v1.3 each column is an H3 under "Columns" (v0.5: "Dimensions" and
+  "Metrics") whose fields are H4s; that H3 is one unit too, so a column pairs
+  with its v1.3+ H4 counterpart (see pairing()).
   Key = "<h2slug>/<h3slug>/<h4slug>" with numeric prefixes stripped, so a
   section that gets renumbered between versions still matches.
 */
@@ -378,7 +394,7 @@ function parseSpec(html, v){
   const heads = [...doc.querySelectorAll("h2,h3,h4")];
   const sections = new Map();
   const order = [];
-  let h2 = null, h3 = null;
+  let h2 = null, h3 = null, colUnit = false;
 
   for(let i=0;i<heads.length;i++){
     const h = heads[i];
@@ -388,10 +404,11 @@ function parseSpec(html, v){
       // does this H3 own any H4 before the next H2/H3?
       const next = heads[i+1];
       const hasChildren = next && next.tagName === "H4";
-      if(!hasChildren) addSection(h, 3);
+      colUnit = hasChildren && !!h2 && COLUMN_H2.test(stripNum(h2.id));
+      if(!hasChildren || colUnit) addSection(h, 3);
       continue;
     }
-    addSection(h, 4);
+    if(!colUnit) addSection(h, 4);
   }
 
   function addSection(head, level){
@@ -410,10 +427,10 @@ function parseSpec(html, v){
       h3slug:  (level===4 && h3) ? stripNum(h3.id) : "",
       slug:    stripNum(head.id),
       anchor:  head.id,
-      blocks:  blocksFrom(nodes),
+      blocks:  blocksFrom(nodes, level),
       constraints: constraintsFrom(nodes),
-      subsections: subsectionsFrom(nodes),
-      requirements: requirementsFrom(nodes)
+      subsections: subsectionsFrom(nodes, level),
+      requirements: requirementsFrom(nodes, level)
     };
     s.textKey = s.blocks.map(b => b.text.toLowerCase()).join("\n");
     sections.set(key, s);
@@ -434,8 +451,17 @@ function parseSpec(html, v){
   return { version:v, sections, order };
 }
 
+const COLUMN_H2 = /^(columns|dimensions|metrics)$/;
+/* Subheading block type relative to the unit, so an H3 unit's H4 fields read
+   like an H4 unit's H5 fields. null if the tag is not a subheading. */
+function subHead(tag, level){
+  const m = /^H([4-6])$/.exec(tag);
+  if(!m || +m[1] <= level) return null;
+  return "h" + Math.min(6, +m[1] + 4 - level);
+}
+
 /* Flatten a section's DOM into ordered, diffable text blocks. */
-function blocksFrom(nodes){
+function blocksFrom(nodes, level){
   const out = [];
   const push = (type, text, extra) => {
     const t = norm(text);
@@ -444,7 +470,8 @@ function blocksFrom(nodes){
   };
   const walk = (n) => {
     const tag = n.tagName;
-    if(/^H[56]$/.test(tag)){ push(tag.toLowerCase(), stripHeadNum(n.textContent)); return; }
+    const sh = subHead(tag, level);
+    if(sh){ push(sh, stripHeadNum(n.textContent)); return; }
     if(tag === "P"){ push("p", n.textContent); return; }
     if(tag === "UL" || tag === "OL"){
       [...n.children].forEach(li => {
@@ -493,10 +520,10 @@ function constraintsFrom(nodes){
 }
 
 /* Which H5/H6 subsections exist (normalised titles, numbers stripped). */
-function subsectionsFrom(nodes){
+function subsectionsFrom(nodes, level){
   const out = [];
   const walk = n => {
-    if(/^H[56]$/.test(n.tagName)){ out.push(stripHeadNum(n.textContent)); return; }
+    if(subHead(n.tagName, level)){ out.push(stripHeadNum(n.textContent)); return; }
     if(n.children && n.children.length) [...n.children].forEach(walk);
   };
   nodes.forEach(walk);
@@ -504,11 +531,11 @@ function subsectionsFrom(nodes){
 }
 
 /* Normative requirement bullets under the "Requirements" subsection. */
-function requirementsFrom(nodes){
+function requirementsFrom(nodes, level){
   const reqs = [];
   let inReq = false;
   const walk = n => {
-    if(/^H[56]$/.test(n.tagName)){
+    if(subHead(n.tagName, level)){
       inReq = /^requirements?$/i.test(stripHeadNum(n.textContent));
       return;
     }
@@ -618,23 +645,70 @@ function wordStats(ops){
 }
 
 /* ---------------------------------------------------------- section status */
-function statusOf(key){
+/*
+  Sections that moved between versions (v1.3 put columns under Datasets) have
+  different keys. Pair an unmatched old key with an unmatched new key when their
+  last segment matches loosely and the match is unique. Later passes match a
+  subsection whose title words were reordered under the same parent (v1.4
+  "Introduced Version" became "Version Introduced", "Example SQL Query" became
+  "Example SQL Queries"), then drop a trailing
+  "name" (v1.2 "Invoice Issuer" became v1.3 "Invoice Issuer Name").
+  Several candidates under different datasets resolve to Cost and Usage, the
+  only dataset before v1.3.
+*/
+function pairing(){
+  const id = state.from.slug + ">" + state.to.slug;
+  if(state.pairs && state.pairs.id === id) return state.pairs;
   const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
-  const a = A && A.sections.get(key), b = B && B.sections.get(key);
+  const onlyA = A.order.filter(k => !B.sections.has(k)), onlyB = B.order.filter(k => !A.sections.has(k));
+  const b2a = new Map(), a2b = new Map();
+  const ident = k => k.split("/").pop().replace(/-+deprecated$/, "").replace(/-/g, "");
+  const reordered = k => { const p = k.split("/"); return p.slice(0, -1).join("/") + "/" + p.pop().split("-").map(w => w.replace(/(ie)?s$/, "")).sort().join("-"); };
+  [ident, reordered, k => ident(k).replace(/name$/, "")].forEach(f => {
+    const group = (keys, used) => {
+      const m = new Map();
+      keys.filter(k => !used.has(k)).forEach(k => { const i = f(k); if(i.length > 2) m.set(i, (m.get(i) || []).concat([k])); });
+      return m;
+    };
+    const ga = group(onlyA, a2b), gb = group(onlyB, b2a);
+    gb.forEach((bs, i) => {
+      const as = ga.get(i);
+      if(!as || as.length !== 1) return;
+      if(bs.length > 1) bs = bs.filter(k => k.includes("/cost-and-usage/"));
+      if(bs.length === 1){ b2a.set(bs[0], as[0]); a2b.set(as[0], bs[0]); }
+    });
+  });
+  return (state.pairs = {id, b2a, a2b});
+}
+
+/* The old and new section for a picker key (the new key when a section moved). */
+function sides(key){
+  const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+  const b = B.sections.get(key);
+  const aKey = A.sections.has(key) ? key : (b ? pairing().b2a.get(key) : undefined);
+  return { a: aKey ? A.sections.get(aKey) : undefined, b, aKey };
+}
+
+/* "reorganized" = moved or renumbered with identical text: not a substantive change. */
+function statusOf(key){
+  const {a, b, aKey} = sides(key);
   if(a && !b) return "removed";
   if(!a && b) return "added";
   if(!a && !b) return "missing";
-  return a.textKey === b.textKey ? (a.number === b.number ? "same" : "renumbered") : "modified";
+  if(a.textKey !== b.textKey) return "modified";
+  return (aKey === key && a.number === b.number) ? "same" : "reorganized";
 }
 
 function unionKeys(){
   const A = state.docs.get(state.from.slug), B = state.docs.get(state.to.slug);
+  const {a2b} = pairing();
   const seen = new Set(), out = [];
-  const push = (k, src) => { if(!seen.has(k)){ seen.add(k); out.push({key:k, src}); } };
-  // walk the newer document first so ordering follows the current spec
-  B.order.forEach(k => push(k, "b"));
-  A.order.forEach(k => push(k, "a"));
-  return out.map(o => o.key);
+  const push = k => { if(!seen.has(k)){ seen.add(k); out.push(k); } };
+  // walk the newer document first so ordering follows the current spec;
+  // old keys that moved are listed under their new key only
+  B.order.forEach(push);
+  A.order.forEach(k => { if(!a2b.has(k)) push(k); });
+  return out;
 }
 
 /* ------------------------------------------------------------------ render */
@@ -647,7 +721,7 @@ function renderPicker(){
   keys.forEach(k => {
     const s = (B.sections.get(k) || A.sections.get(k));
     const st = statusOf(k);
-    if(state.onlyChanged && (st === "same")) return;
+    if(state.onlyChanged && (st === "same" || (st === "reorganized" && !state.showReorg))) return;
     const g = [s.groupH2, s.groupH3].filter(Boolean).join(" › ") || "Other";
     if(!groups.has(g)) groups.set(g, []);
     groups.set(g, groups.get(g).concat([{key:k, s, st}]));
@@ -659,7 +733,8 @@ function renderPicker(){
     const og = el("optgroup"); og.label = gname;
     items.forEach(({key, s, st}) => {
       const tag = st === "added" ? "  ✚ added" : st === "removed" ? "  ✖ removed"
-                : st === "modified" ? "  ● changed" : st === "renumbered" ? "  ⇄ renumbered" : "";
+                : st === "modified" ? "  ● changed"
+                : st === "reorganized" && state.showReorg ? "  ⇄ reorganized" : "";
       const o = el("option", null, s.title + tag);
       o.value = key;
       og.appendChild(o); count++;
@@ -708,16 +783,17 @@ function render(){
   const host = $("#app");
   if(!key){ $("#summary").innerHTML = ""; $("#structured").innerHTML = ""; $("#diff").innerHTML = ""; return; }
 
-  const a = A.sections.get(key), b = B.sections.get(key);
+  const {a, b, aKey} = sides(key);
   const s = b || a;
   const st = statusOf(key);
+  const moved = a && b && aKey !== key;
 
   /* ---- summary ---- */
   const badge = {
     added:    ['b-add',  "Added in " + state.to.label],
     removed:  ['b-del',  "Removed in " + state.to.label],
     modified: ['b-mod',  "Modified"],
-    renumbered:['b-moved',"Renumbered only"],
+    reorganized:['b-moved',"Reorganized only · no text change"],
     same:     ['b-same', "No change"]
   }[st] || ['b-same','—'];
 
@@ -732,7 +808,10 @@ function render(){
     '<h1>' + esc(s.title) + '</h1>' +
     '<div class="sub">' +
       esc([s.groupH2, s.groupH3].filter(Boolean).join(" › ")) +
-      (a && b && a.number !== b.number
+      (moved
+        ? ' · <span class="mono">' + esc(b.number) + '</span> <em>(moved from ' +
+          esc([a.groupH2, a.groupH3, a.title].filter(Boolean).join(" › ")) + ' · <span class="mono">' + esc(a.number) + '</span>)</em>'
+        : a && b && a.number !== b.number
         ? ' · <span class="mono">' + esc(a.number) + '</span> → <span class="mono">' + esc(b.number) + '</span> <em>(renumbered)</em>'
         : ' · <span class="mono">' + esc(s.number || "") + '</span>') +
     '</div>' +
@@ -953,9 +1032,15 @@ function fail(e){
   $("#boot").classList.add("hidden");
   const box = $("#error");
   box.className = "err";
-  box.innerHTML = "<b>Could not load the specification.</b><br>" + esc(e.message || String(e)) +
-    "<br><br>This tool reads the published spec live from <span class='mono'>focus.finops.org</span>. " +
-    "If that host is unreachable from your network the comparison cannot be built.";
+  box.innerHTML = (e && e.offline
+      ? "<b>focus.finops.org is not responding right now.</b><br>Spec compare reads the published " +
+        "specification live from <span class='mono'>focus.finops.org</span>, so it cannot build a comparison " +
+        "until that site is reachable. Outages are usually brief. The schema maps work without it."
+      : "<b>Could not load the specification.</b><br>This tool reads the published spec live from " +
+        "<span class='mono'>focus.finops.org</span>.") +
+    "<br><small>" + esc(e.message || String(e)) + "</small>" +
+    "<br><br><button class='btn' id='retry'>Try again</button>";
+  box.querySelector("#retry").addEventListener("click", () => reload());
   box.classList.remove("hidden");
 }
 
@@ -992,6 +1077,7 @@ async function init(){
   });
   $("#sec").addEventListener("change", e => { state.sec = e.target.value; safeRender(); writeHash(); });
   $("#onlyChanged").addEventListener("change", e => { state.onlyChanged = e.target.checked; renderPicker(); safeRender(); writeHash(); });
+  $("#showReorg").addEventListener("change", e => { state.showReorg = e.target.checked; renderPicker(); safeRender(); });
   $("#onlyDiffRows").addEventListener("change", e => { state.onlyDiffRows = e.target.checked; safeRender(); });
   $("#vSplit").addEventListener("click", () => setView("split"));
   $("#vUni").addEventListener("click",   () => setView("unified"));
